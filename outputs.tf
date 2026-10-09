@@ -74,7 +74,7 @@ output "next_steps" {
 
     terraform destroy
 
-    This stack costs roughly 55 USD per month if left running.
+    Always destroy the stack when you are finished testing.
 
   EOT
 }

@@ -25,8 +25,8 @@ with real emails and a real AI — not a simulation.
 ## What you need
 
 1. **An AWS account** with a card on file.
-2. **A domain name** you own (OVH, Namecheap, Gandi…). 2-12 USD a year; a
-   `.store` or `.xyz` is fine.
+2. **A domain name** you own (OVH, Namecheap, Gandi…). A `.store` or
+   `.xyz` is fine.
 3. **A Route 53 hosted zone** for that domain, with the registrar pointing at
    it. *(step 1)*
 4. **A Gemini API key** — free, 30 seconds to get.
@@ -351,4 +351,4 @@ These are not decorative details — they are practices worth keeping.
   `TF_VAR_db_password` instead.
 - The Gemini key passes through `terraform.tfstate` in clear text.
 - State is local: in a team, use an S3 backend with locking.
-- RDS backups are disabled to stay inside the free tier.
+- RDS backups are disabled; enable them before storing anything real.
