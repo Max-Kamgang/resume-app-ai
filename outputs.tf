@@ -1,80 +1,80 @@
-# ─────────────────────────────────────────────
-# Sorties — ce dont vous avez besoin après `terraform apply`
-# ─────────────────────────────────────────────
+# What you need after `terraform apply`.
 
 output "portal_url" {
-  description = "Adresse publique du site."
+  description = "Public address of the site."
   value       = "https://${local.app_fqdn}"
 }
 
 output "sender_email" {
-  description = "Adresse d'expédition des emails. À vérifier dans SES si ce n'est pas un domaine."
+  description = "Address the emails are sent from."
   value       = local.sender_email
 }
 
 output "gemini_model" {
-  description = "Modele Gemini utilise pour noter les CV."
+  description = "Gemini model used to score CVs."
   value       = var.gemini_model
 }
 
 output "match_threshold" {
-  description = "Score à partir duquel une candidature est retenue."
+  description = "Score at or above which an application is successful."
   value       = var.match_threshold
 }
 
 output "open_positions" {
-  description = "Identifiants des postes proposés sur le site."
+  description = "Role ids offered on the site."
   value       = keys(var.job_openings)
 }
 
-
-
 output "assets_bucket" {
-  description = "Bucket contenant index.html, app/app.py et app/jobs.json."
+  description = "Bucket holding index.html, app/app.py and app/jobs.json."
   value       = aws_s3_bucket.rp_frontend.id
 }
 
 
-# ─────────────────────────────────────────────
-# Ce qu'il reste à faire à la main — affiché à la fin de l'apply
-# ─────────────────────────────────────────────
-output "etapes_suivantes" {
-  description = "Les deux actions manuelles qu'aucun code Terraform ne peut réaliser."
+# Printed at the end of the apply.
+output "next_steps" {
+  description = "The one manual action Terraform cannot perform for you."
   value       = <<-EOT
 
     ┌───────────────────────────────────────────────────────────────────────┐
-    │  DÉPLOIEMENT TERMINÉ                                                  │
+    │  DEPLOYMENT COMPLETE                                                  │
     └───────────────────────────────────────────────────────────────────────┘
 
-    Votre site : https://${local.app_fqdn}
+    Your site: https://${local.app_fqdn}
 
-    Comptez 3 à 5 minutes : les serveurs démarrent et doivent passer deux
-    contrôles de santé avant que le site réponde.
+    Give it 3 to 5 minutes: the servers boot and must pass two health checks
+    before the site answers.
 
-    ─── ÉTAPE 1 : vérifier votre adresse email ────────────────────────────
+    ─── STEP 1: verify your email address ─────────────────────────────────
 
-    AWS vient d'envoyer un lien de vérification à ${var.hr_email}.
-    CLIQUEZ-LE, sinon aucun email ne pourra partir ni arriver.
+    AWS has just emailed a verification link to ${var.hr_email}.
+    CLICK IT, or no email can be sent or received.
 
       aws sesv2 list-email-identities --region ${data.aws_region.current.region} --output table
 
-    Tant que le compte est en bac à sable SES, vous ne pouvez écrire qu'aux
-    adresses vérifiées. Pour tester, saisissez ${var.hr_email} comme adresse
-    du candidat. Pour accepter de vrais candidats, demandez l'accès production
-    dans la console SES.
+    While the account is in the SES sandbox you can only write to verified
+    addresses. For testing, enter ${var.hr_email} as the candidate address.
+    To accept real candidates, request production access in the SES console.
 
-    ─── ÉTAPE 2 : rien à faire, l'IA est déjà active ──────────────────────
+    ─── STEP 2: nothing to do, the AI is already live ─────────────────────
 
-    L'analyse des CV tourne sur ${var.gemini_model} avec la clé que vous avez
-    fournie. Aucune autorisation AWS à demander, aucun formulaire à remplir.
+    CV screening runs on ${var.gemini_model} with the key you supplied.
+    No AWS permission to request, no form to fill in.
 
-    Si une analyse échoue, le candidat reçoit quand même un message
-    « dossier en cours d'examen » et une alerte part vers ${var.hr_email}.
+    If a screening fails, the candidate still gets an "under review" message
+    and an alert goes to ${var.hr_email}.
 
-    ─── TESTER ────────────────────────────────────────────────────────────
+    ─── TEST IT ───────────────────────────────────────────────────────────
 
-    Ouvrez le site, choisissez un poste, remplissez le formulaire avec
-    ${var.hr_email} comme email, et envoyez un CV en PDF.
+    Open the site, pick a role, fill the form using ${var.hr_email} as the
+    candidate email, and upload a PDF CV. The match score appears on the page
+    and in the decision email.
+
+    ─── WHEN YOU ARE DONE ─────────────────────────────────────────────────
+
+    terraform destroy
+
+    This stack costs roughly 55 USD per month if left running.
 
   EOT
 }

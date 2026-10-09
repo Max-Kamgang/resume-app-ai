@@ -18,16 +18,15 @@ systemctl start amazon-ssm-agent
 
 # =========================
 # PYTHON DEPENDENCIES
-# google-genai : le SDK officiel Gemini.
+# google-genai is the official Gemini SDK.
 # =========================
 python3.11 -m pip install --upgrade pip
 python3.11 -m pip install flask gunicorn boto3 psycopg2-binary google-genai
 
 # =========================
-# APP + FRONTEND DEPLOYMENT
-# app.py, index.html and jobs.json live in S3 (published by Terraform),
-# not inside user-data — user-data is capped at 16 KB and this keeps the
-# application editable without replacing the instances.
+# APP + FRONTEND
+# app.py, index.html and jobs.json live in S3: user-data is capped at 16 KB,
+# and this keeps the app editable without replacing the instances.
 # =========================
 mkdir -p /opt/rp-app
 
@@ -55,11 +54,9 @@ mkdir -p /usr/share/nginx/html
 /usr/local/bin/rp-sync.sh
 
 # =========================
-# CLE API GEMINI
-#
-# Ecrite dans un fichier .env lu par systemd (EnvironmentFile), et non dans
-# l'unite de service : le fichier est en 600 root, donc invisible des autres
-# utilisateurs, et il ne part jamais dans S3 avec le code de l'application.
+# GEMINI API KEY
+# Written to a .env read by systemd (EnvironmentFile) rather than into the unit
+# file: 600 root, invisible to other users, and never shipped to S3 with the code.
 # =========================
 umask 077
 cat > /opt/rp-app/.env <<ENVFILE
@@ -86,10 +83,11 @@ Environment=DB_SECRET_NAME=${db_secret_name}
 Environment=SENDER_EMAIL=${sender_email}
 Environment=SENDER_NAME=${sender_name}
 Environment=HR_EMAIL=${hr_email}
+Environment=COMPANY_NAME=${company_name}
 Environment=SES_CONFIG_SET=${ses_config_set}
 Environment=GEMINI_MODEL=${gemini_model}
 Environment=GEMINI_FALLBACK_MODEL=${gemini_fallback_model}
-# La cle API vit dans un fichier separe, lu par systemd au demarrage.
+# The API key lives in a separate file, read by systemd at startup.
 EnvironmentFile=/opt/rp-app/.env
 Environment=MATCH_THRESHOLD=${match_threshold}
 Environment=INTERVIEW_BOOKING_URL=${booking_url}
@@ -107,7 +105,7 @@ WantedBy=multi-user.target
 SERVICE
 
 # =========================
-# SYNC TIMER — picks up app/frontend changes every 2 minutes
+# SYNC TIMER - picks up app/frontend changes every 2 minutes
 # =========================
 cat > /etc/systemd/system/rp-sync.service <<'SYNCSVC'
 [Unit]
@@ -132,7 +130,7 @@ SYNCTIMER
 
 # =========================
 # NGINX CONFIG
-# nginx serves the static form, Flask handles the API — same origin, no CORS.
+# nginx serves the static form, Flask handles the API: same origin, no CORS.
 # =========================
 cat > /etc/nginx/conf.d/rp.conf <<'NGINX'
 server {

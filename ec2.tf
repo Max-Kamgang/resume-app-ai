@@ -30,6 +30,7 @@ resource "aws_instance" "rp_server_1" {
     sender_email          = local.sender_email
     sender_name           = local.sender_display_name
     hr_email              = var.hr_email
+    company_name          = var.company_name
     ses_config_set        = aws_sesv2_configuration_set.rp_ses_config_set.configuration_set_name
     gemini_api_key        = var.gemini_api_key
     gemini_model          = var.gemini_model
@@ -80,6 +81,7 @@ resource "aws_instance" "rp_server_2" {
     sender_email          = local.sender_email
     sender_name           = local.sender_display_name
     hr_email              = var.hr_email
+    company_name          = var.company_name
     ses_config_set        = aws_sesv2_configuration_set.rp_ses_config_set.configuration_set_name
     gemini_api_key        = var.gemini_api_key
     gemini_model          = var.gemini_model

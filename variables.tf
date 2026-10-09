@@ -1,192 +1,124 @@
 ###############################################################################
+#  SECTION 1 — WHAT YOU MUST PROVIDE                                          #
 #                                                                             #
-#   S E C T I O N   1   —   C E   Q U E   V O U S   D E V E Z   F O U R N I R #
+#  Four values. The variables below have NO default, so Terraform asks for     #
+#  them at launch — that is a prompt, not an error.                           #
 #                                                                             #
-#   Quatre informations, et c'est tout. Les variables ci-dessous n'ont PAS   #
-#   de valeur par défaut : Terraform vous les demande au lancement.          #
-#                                                                             #
-#       $ terraform apply                                                     #
-#       var.company_name                                                      #
-#         Nom de votre société...                                             #
-#         Enter a value: _                                                    #
-#                                                                             #
-#   C'est une INVITE, pas une erreur. Vous tapez, ça continue.                #
-#                                                                             #
-#   Pour ne plus être invité, créez terraform.tfvars :                        #
-#       cp terraform.tfvars.example terraform.tfvars                          #
-#                                                                             #
-#   Tout le reste (Section 2) a des valeurs qui fonctionnent telles quelles.  #
-#                                                                             #
+#  To stop being asked:  cp terraform.tfvars.example terraform.tfvars         #
+#  Everything in Section 2 already works as-is.                               #
 ###############################################################################
 
-# ─── 1.1 Votre nom de domaine ────────────────────────────────────────────────
-#
-# PRÉREQUIS, à faire AVANT le premier `terraform apply` :
-#   1. posséder ce domaine chez un registrar ;
-#   2. avoir créé une zone hébergée Route 53 pour lui dans CE compte AWS ;
-#   3. avoir pointé les serveurs de noms du domaine vers cette zone.
-#
-# Vérifiez que la zone existe — si cette commande ne renvoie rien, l'apply
-# échouera sur « no matching Route53Zone found » :
-#
-#     aws route53 list-hosted-zones-by-name --dns-name mondomaine.com
-#
-# Le stack y créera le certificat TLS, les enregistrements DKIM et le
-# sous-domaine du portail.
+# Requires, BEFORE the first apply: you own this domain, a Route 53 hosted zone
+# exists for it in THIS account, and the registrar points at that zone.
+# Check with: aws route53 list-hosted-zones-by-name --dns-name example.com
 variable "root_domain" {
-  description = "Votre domaine, ex. mondomaine.com. Une zone Route 53 doit deja exister pour lui dans ce compte."
+  description = "Your domain, e.g. example.com. A Route 53 zone must already exist for it in this account."
   type        = string
 
   validation {
     condition     = can(regex("^[a-z0-9-]+[.][a-z0-9.-]*[a-z]{2,}$", var.root_domain))
-    error_message = "root_domain doit etre un nom de domaine, par exemple mondomaine.com (sans https:// ni www)."
+    error_message = "root_domain must be a domain name such as example.com (no https:// and no www)."
   }
 }
 
 
-# ─── 1.2 Votre adresse email ─────────────────────────────────────────────────
-#
-# Trois rôles : destinataire des réponses des candidats, adresse affichée en
-# pied des emails, et boîte qui reçoit les alertes si l'analyse IA échoue.
-#
-# ATTENTION : une vraie boîte que vous pouvez OUVRIR (Gmail par exemple).
-# Pas une adresse de votre domaine : vérifier un domaine dans SES donne le
-# droit d'ENVOYER, pas de recevoir.
-#
-# AWS enverra un lien de vérification à cette adresse après l'apply :
-# il faut le cliquer.
+# A real inbox you can OPEN, not an address on your domain: verifying a domain
+# in SES grants the right to SEND, not to receive. AWS mails a verification
+# link here after the apply; you must click it.
 variable "hr_email" {
-  description = "Votre vraie adresse email, ex. moi@gmail.com. Recoit les reponses et les alertes."
+  description = "Your real email address. Receives candidate replies and alerts."
   type        = string
 
   validation {
     condition     = can(regex("^[^@ ]+@[^@ ]+[.][a-z]{2,}$", var.hr_email))
-    error_message = "hr_email doit etre une adresse email valide, par exemple moi@gmail.com."
+    error_message = "hr_email must be a valid email address, e.g. me@gmail.com."
   }
 }
 
 
-# ─── 1.3 Le nom de votre société ─────────────────────────────────────────────
-#
-# Affiché sur le site carrières et dans les emails. Sert aussi à composer le
-# nom d'expéditeur vu par le candidat : « Utrains » donne « Utrains HR ».
-#
-# L'adresse d'expédition, elle, est composée automatiquement :
-#   no-reply@<votre domaine>
+# Also composes the sender name shown to candidates: "Utrains" -> "Utrains HR".
 variable "company_name" {
-  description = "Nom de votre societe, ex. Utrains. Apparait sur le site et dans les emails."
+  description = "Your company name. Shown on the site and in the emails."
   type        = string
 
   validation {
     condition     = length(trimspace(var.company_name)) >= 2
-    error_message = "company_name doit contenir au moins 2 caracteres."
+    error_message = "company_name must be at least 2 characters."
   }
 }
 
 
-# ─── 1.4 Votre clé API Gemini ────────────────────────────────────────────────
-#
-# Obtenez-la gratuitement sur https://aistudio.google.com/apikey
-#
-# La clé est écrite par Terraform dans /opt/rp-app/.env sur les serveurs, et
-# lue par l'application au démarrage. Elle n'apparaît ni dans le code, ni dans
-# l'objet S3 de déploiement.
-#
-# ATTENTION : la clé transite par terraform.tfstate EN CLAIR. Le .gitignore du
-# projet exclut déjà ce fichier — ne le forcez jamais dans un dépôt Git.
-#
-# Trois façons de la fournir, au choix :
-#   1. terraform.tfvars  →  gemini_api_key = "votre-cle"
-#   2. variable d'env    →  export TF_VAR_gemini_api_key="votre-cle"
-#   3. ne rien faire     →  Terraform vous la demande au lancement
+# Free from https://aistudio.google.com/apikey
+# Terraform writes it to /opt/rp-app/.env on the servers. It also passes through
+# terraform.tfstate IN CLEAR — the project .gitignore excludes that file, never
+# force it into a repository.
 variable "gemini_api_key" {
-  description = "Cle API Gemini (https://aistudio.google.com/apikey)."
+  description = "Gemini API key (https://aistudio.google.com/apikey)."
   type        = string
   sensitive   = true
 
-  # Deux garde-fous : on refuse le texte d'exemple laisse tel quel, et une
-  # valeur manifestement trop courte. Sans cela, un oubli deploierait une
-  # infrastructure complete dont l'analyse IA echoue silencieusement.
+  # Rejects the example text left as-is: otherwise a forgotten paste deploys a
+  # whole stack whose screening fails silently.
   validation {
-    condition     = !can(regex("(?i)collez|votre-cle|your-key|[.][.][.]", var.gemini_api_key))
-    error_message = "Vous n'avez pas encore colle votre cle. Ouvrez terraform.tfvars et remplacez le texte d'exemple par la cle obtenue sur https://aistudio.google.com/apikey"
+    condition     = !can(regex("(?i)paste|your-key|votre-cle|[.][.][.]", var.gemini_api_key))
+    error_message = "You have not pasted your key yet. Open terraform.tfvars and replace the example text with the key from https://aistudio.google.com/apikey"
   }
 
   validation {
     condition     = length(trimspace(var.gemini_api_key)) >= 30
-    error_message = "gemini_api_key semble trop courte. Recuperez votre cle sur https://aistudio.google.com/apikey"
+    error_message = "gemini_api_key looks too short. Get your key from https://aistudio.google.com/apikey"
   }
 }
 
 
-# ─── 1.5 Région AWS ──────────────────────────────────────────────────────────
-# Gardez us-east-1 si vous débutez : c'est la région au niveau gratuit le plus
-# large. L'analyse IA passe par Gemini, donc la région n'a aucun effet dessus.
 variable "aws_region" {
-  description = "Région AWS de déploiement."
+  description = "AWS region to deploy into."
   type        = string
   default     = "us-east-1"
 }
 
 
-# ─── 1.6 Seuil d'acceptation ─────────────────────────────────────────────────
-# Score (0-100) à partir duquel le candidat est invité en entretien.
-# Le seuil est INCLUSIF : avec 80, un score de 80 est accepté, 79 est refusé.
+# Inclusive: at 80, a score of 80 is accepted and 79 is rejected.
 variable "match_threshold" {
-  description = "Score de correspondance à partir duquel la candidature est retenue."
+  description = "Score at or above which a candidate is invited to interview."
   type        = number
   default     = 80
 
   validation {
     condition     = var.match_threshold >= 0 && var.match_threshold <= 100
-    error_message = "match_threshold doit être compris entre 0 et 100."
+    error_message = "match_threshold must be between 0 and 100."
   }
 }
 
 
-# ─── 1.7 Lien de réunion (facultatif) ────────────────────────────────────────
-# Renseigné  → l'email d'acceptation contient un bouton « Réserver mon entretien ».
-# Vide       → l'email demande au candidat ses créneaux de disponibilité.
-# Collez ici un lien Calendly, Google Meet, Teams, etc.
+# Set: the acceptance email carries a "Book my interview" button.
+# Empty: the email asks the candidate for their availability instead.
 variable "interview_booking_url" {
-  description = "Lien de prise de rendez-vous. Vide = on demande ses disponibilités au candidat."
+  description = "Scheduling link. Empty = ask the candidate for availability."
   type        = string
   default     = ""
 }
 
 
-# ─── 1.8 Suffixe des buckets S3 ──────────────────────────────────────────────
-# Les noms de buckets S3 sont uniques dans le MONDE ENTIER : si quelqu'un a
-# déjà pris le nom, votre apply échoue. Laissé vide, l'identifiant de votre
-# compte AWS est utilisé — unique par construction, donc rien à faire.
+# S3 bucket names are globally unique. Empty uses your AWS account id, which is
+# unique by construction.
 variable "bucket_suffix" {
-  description = "Suffixe des buckets S3. Vide = identifiant du compte AWS (recommandé)."
+  description = "Suffix for the S3 bucket names. Empty = AWS account id."
   type        = string
   default     = ""
 }
 
 
-# ─── 1.9 Les offres d'emploi ─────────────────────────────────────────────────
-# C'est ici que vous décrivez vos postes. Chaque entrée comporte :
+# Each role carries:
+#   description    the PUBLIC posting, read by the candidate AND by the AI
+#   scoring_notes  the INTERNAL grid, read by the AI only, never exposed
 #
-#   title         intitulé affiché dans le menu déroulant du site
-#   contract      CDI, CDD, stage, alternance…
-#   location      lieu ou modalité de travail
-#   experience    expérience attendue
-#   description   l'offre PUBLIQUE, lue par le candidat ET par l'IA
-#   scoring_notes grille INTERNE, lue par l'IA uniquement — jamais exposée
-#
-# Format de `description` reconnu par le site :
-#   - une ligne courte finissant par « : »  → devient un intertitre
-#   - une ligne commençant par « - »        → devient une puce
-#   - le reste                              → paragraphe
-#
-# Ajouter un poste = ajouter une entrée ici, puis terraform apply.
-# Aucun remplacement de serveur : le changement est en ligne en 2 minutes.
-###############################################################################
-
+# Format recognised by the site:
+#   a short line ending in ":"  -> section heading
+#   a line starting with "- "   -> bullet
+#   anything else               -> paragraph
 variable "job_openings" {
-  description = "Postes ouverts, indexés par un identifiant stable."
+  description = "Open roles, keyed by a stable id."
 
   type = map(object({
     title         = string
@@ -199,178 +131,164 @@ variable "job_openings" {
 
   default = {
     llmops-engineer = {
-      title      = "Ingénieur LLMOps"
-      contract   = "CDI"
-      location   = "Hybride — télétravail partiel"
-      experience = "5 ans d'expérience minimum"
+      title      = "LLMOps Engineer"
+      contract   = "Full-time"
+      location   = "Hybrid — partly remote"
+      experience = "5+ years of experience"
 
       description = <<-EOT
-        Nous industrialisons des applications bâties sur des grands modèles de langage :
-        assistants internes, extraction documentaire, agents outillés. Vous porterez la
-        chaîne complète qui mène du prototype au service en production — fiable, mesuré
-        et maîtrisé en coût.
+        We productionise applications built on large language models: internal
+        assistants, document extraction, tool-using agents. You will own the whole
+        chain that takes a prototype to a reliable, measured, cost-controlled service.
 
-        Vos missions :
-        - Concevoir, déployer et exploiter nos services d'inférence en production, sur API managées (Amazon Bedrock, Claude) comme sur modèles auto-hébergés.
-        - Construire la couche d'orchestration : chaînage d'appels, appel d'outils, sorties structurées, garde-fous et reprises sur erreur.
-        - Mettre en place et faire vivre nos jeux d'évaluation : cas de test, métriques de qualité, juges automatiques, détection de régression à chaque changement de prompt ou de modèle.
-        - Industrialiser le versionnage des prompts et le déploiement progressif, avec traçabilité complète de ce qui tourne en production.
-        - Instrumenter l'observabilité propre aux LLM : latence, consommation de tokens, coût par requête, taux d'erreur, dérive de qualité.
-        - Optimiser coût et latence : mise en cache, dimensionnement du contexte, choix du modèle selon la criticité de la tâche.
-        - Construire nos pipelines RAG : ingestion, découpage, embeddings, base vectorielle, stratégies de récupération et de reclassement.
-        - Sécuriser la chaîne de bout en bout : défense contre l'injection de prompt, cloisonnement des données sensibles, gestion des secrets.
+        What you will do:
+        - Design, deploy and operate our inference services in production, on managed APIs as well as self-hosted models.
+        - Build the orchestration layer: call chaining, tool use, structured outputs, guardrails and error recovery.
+        - Build and maintain our evaluation sets: test cases, quality metrics, automated judges, regression detection on every prompt or model change.
+        - Industrialise prompt versioning and progressive rollout, with full traceability of what runs in production.
+        - Instrument LLM-specific observability: latency, token spend, cost per request, error rate, quality drift.
+        - Optimise cost and latency: caching, context sizing, model choice matched to how critical the task is.
+        - Build our RAG pipelines: ingestion, chunking, embeddings, vector store, retrieval and reranking strategies.
+        - Secure the chain end to end: prompt injection defence, isolation of sensitive data, secret management.
 
-        Ce que nous attendons :
-        - Cinq ans d'expérience en ingénierie logicielle, plateforme ou MLOps, dont au moins deux sur des systèmes à base de LLM réellement en production.
-        - Python de niveau production : code testé, typé, packagé, relu par les pairs.
-        - Au moins une application LLM que vous avez mise en production, intégrée à une API de modèle.
-        - Ingénierie de prompt appliquée : sorties structurées, appel d'outils, gestion du contexte.
-        - Une pratique réelle de l'évaluation : vous savez démontrer une amélioration par la mesure, pas par l'impression.
-        - Docker, déploiement sur cloud public (AWS de préférence), infrastructure as code et CI/CD.
+        What we expect:
+        - Five years in software, platform or MLOps engineering, including at least two on LLM systems genuinely running in production.
+        - Production-grade Python: tested, typed, packaged, peer-reviewed code.
+        - At least one LLM application you took to production, integrated with a model API.
+        - Applied prompt engineering: structured outputs, tool use, context management.
+        - Real evaluation practice: you can show an improvement by measurement, not by impression.
+        - Docker, deployment on a public cloud (AWS preferred), infrastructure as code and CI/CD.
 
-        Ce qui fera la différence :
-        - RAG avancé : bases vectorielles, reclassement, recherche hybride.
-        - Agents outillés et protocoles d'intégration type MCP.
-        - Fine-tuning, distillation, quantification, service de modèles ouverts.
-        - Kubernetes, Kafka ou files d'attente pour le traitement asynchrone.
-        - Une sensibilité aux enjeux de sécurité et de conformité des systèmes d'IA.
+        What will set you apart:
+        - Advanced RAG: vector stores, reranking, hybrid search.
+        - Tool-using agents and integration protocols such as MCP.
+        - Fine-tuning, distillation, quantisation, serving open models.
+        - Kubernetes, Kafka or queues for asynchronous processing.
+        - A feel for the security and compliance questions AI systems raise.
       EOT
 
       scoring_notes = <<-EOT
-        Signaux de disqualification (ne jamais citer textuellement au candidat) :
-        - Expérience limitée à l'usage d'un assistant de chat, sans mise en production.
-        - Aucune pratique d'évaluation objective de la qualité des sorties.
-        - Projets uniquement personnels ou tutoriels, sans contexte professionnel.
-        Pondération : les six exigences de « Ce que nous attendons » sont obligatoires et
-        portent l'essentiel du score. « Ce qui fera la différence » n'ajoute que quelques points.
+        Disqualifying signals (never quote verbatim to the candidate):
+        - Experience limited to using a chat assistant, with nothing in production.
+        - No objective evaluation of output quality.
+        - Personal or tutorial projects only, with no professional context.
+        Weighting: the six "What we expect" requirements are mandatory and carry most
+        of the score. "What will set you apart" adds only a few points.
       EOT
     }
 
     devops-engineer = {
-      title      = "Ingénieur DevOps"
-      contract   = "CDI"
-      location   = "Hybride — télétravail partiel"
-      experience = "5 ans d'expérience minimum"
+      title      = "DevOps Engineer"
+      contract   = "Full-time"
+      location   = "Hybrid — partly remote"
+      experience = "5+ years of experience"
 
       description = <<-EOT
-        L'équipe plateforme opère l'infrastructure qui porte nos applications internes et
-        clientes. Vous couvrirez l'automatisation de bout en bout : provisionnement,
-        livraison continue, supervision, sécurité et maîtrise des coûts.
+        The platform team runs the infrastructure our internal and customer-facing
+        applications sit on. You will cover automation end to end: provisioning,
+        continuous delivery, monitoring, security and cost control.
 
-        Vos missions :
-        - Concevoir et exploiter notre infrastructure AWS de production : VPC, sous-réseaux publics et privés, ALB, EC2, RDS, S3, IAM, KMS, Route 53, ACM.
-        - Écrire et maintenir l'intégralité de l'infrastructure en Terraform : modules réutilisables, state distant, revue des plans avant application.
-        - Construire et maintenir nos pipelines CI/CD complets — build, tests, analyse de sécurité, déploiement automatisé, rollback.
-        - Conteneuriser les applications avec Docker et les opérer sur Kubernetes ou ECS : gestion des ressources, autoscaling, mises à jour progressives.
-        - Mettre en place l'observabilité : métriques, logs centralisés, traces, tableaux de bord et alerting réellement actionnable.
-        - Appliquer la sécurité par défaut : moindre privilège sur IAM, chiffrement au repos et en transit, rotation des secrets, durcissement réseau.
-        - Garantir la résilience : sauvegardes testées, plan de reprise, objectifs de disponibilité, gestion des incidents et post-mortems.
-        - Optimiser les coûts cloud : dimensionnement, instances réservées ou spot, suivi et réduction de la facture.
+        What you will do:
+        - Design and operate our production AWS infrastructure: VPC, public and private subnets, ALB, EC2, RDS, S3, IAM, KMS, Route 53, ACM.
+        - Write and maintain all infrastructure in Terraform: reusable modules, remote state, plan review before every apply.
+        - Build and maintain our full CI/CD pipelines — build, tests, security scanning, automated deployment, rollback.
+        - Containerise applications with Docker and run them on Kubernetes or ECS: resource management, autoscaling, rolling updates.
+        - Set up observability: metrics, centralised logs, traces, dashboards and alerting people can actually act on.
+        - Apply security by default: least privilege in IAM, encryption at rest and in transit, secret rotation, network hardening.
+        - Keep the platform resilient: tested backups, recovery plans, availability targets, incident handling and post-mortems.
+        - Control cloud cost: right-sizing, reserved or spot instances, tracking and reducing the bill.
 
-        Ce que nous attendons :
-        - Cinq ans d'expérience en DevOps, SRE ou ingénierie cloud.
-        - Une maîtrise approfondie d'AWS en production, au-delà d'un usage ponctuel ou de laboratoires de formation.
-        - Terraform en production : modules, state distant, workflow de revue.
-        - Docker et orchestration de conteneurs, Kubernetes ou ECS.
-        - Des pipelines CI/CD que vous avez vous-même construits et maintenus.
-        - Administration Linux et solides bases réseau : TCP/IP, DNS, TLS.
-        - Scripting Python ou Bash, Git et pratique de la revue de code.
-        - Supervision, alerting et gestion d'incidents en production.
+        What we expect:
+        - Five years in DevOps, SRE or cloud engineering.
+        - Deep AWS experience in production, well beyond occasional use or training labs.
+        - Terraform in production: modules, remote state, review workflow.
+        - Docker and container orchestration, Kubernetes or ECS.
+        - CI/CD pipelines you built and maintained yourself.
+        - Linux administration and solid networking fundamentals: TCP/IP, DNS, TLS.
+        - Python or Bash scripting, Git and code review practice.
+        - Monitoring, alerting and incident handling in production.
 
-        Ce qui fera la différence :
-        - Une certification AWS (Solutions Architect, DevOps Engineer Professional).
-        - Ansible ou un outil de gestion de configuration équivalent.
-        - GitOps (ArgoCD, Flux), service mesh, politiques as code.
-        - Administration PostgreSQL et réglage de performance.
-        - Expérience multi-comptes AWS, Landing Zone, FinOps.
+        What will set you apart:
+        - An AWS certification (Solutions Architect, DevOps Engineer Professional).
+        - Ansible or an equivalent configuration management tool.
+        - GitOps (ArgoCD, Flux), service mesh, policy as code.
+        - PostgreSQL administration and performance tuning.
+        - Multi-account AWS, Landing Zone, FinOps experience.
       EOT
 
       scoring_notes = <<-EOT
-        Signaux de disqualification (ne jamais citer textuellement au candidat) :
-        - Expérience cloud uniquement théorique ou limitée à des projets personnels.
-        - Aucune pratique de l'infrastructure as code.
-        - Certification AWS sans expérience d'exploitation correspondante.
-        Pondération : les huit exigences de « Ce que nous attendons » sont obligatoires et
-        portent l'essentiel du score. « Ce qui fera la différence » n'ajoute que quelques points.
+        Disqualifying signals (never quote verbatim to the candidate):
+        - Cloud experience that is only theoretical or limited to personal projects.
+        - No infrastructure-as-code practice.
+        - An AWS certification with no matching operational experience.
+        Weighting: the eight "What we expect" requirements are mandatory and carry most
+        of the score. "What will set you apart" adds only a few points.
       EOT
     }
   }
 }
 
+
 ###############################################################################
-#                                                                             #
-#   S E C T I O N   2   —   A V A N C É                                       #
-#                                                                             #
-#   Ces variables ont des valeurs qui fonctionnent telles quelles.            #
-#   Vous n'avez normalement PAS besoin d'y toucher pour déployer.             #
-#                                                                             #
+#  SECTION 2 — ADVANCED                                                       #
+#  These defaults work as-is. You normally never need to touch them.          #
 ###############################################################################
 
-# ─── 2.1 Modèle Gemini ───────────────────────────────────────────────────────
-# Modèle utilisé pour noter les CV. Flash est rapide et peu coûteux, largement
-# suffisant pour comparer un CV à une fiche de poste.
+# Flash is fast and cheap, and plenty for matching a CV to a posting.
 variable "gemini_model" {
-  description = "Modele Gemini utilise pour l'analyse des CV."
+  description = "Gemini model used to score CVs."
   type        = string
   default     = "gemini-3.8-flash"
 }
 
-
+# The newest models occasionally answer 503 "high demand".
 variable "gemini_fallback_model" {
-  description = "Modele de repli si le principal renvoie 503 (sature). Vide = pas de repli."
+  description = "Model used when the primary one is overloaded. Empty = no fallback."
   type        = string
   default     = "gemini-flash-latest"
 }
 
-
-# ─── 2.2 Identité du site et des emails ──────────────────────────────────────
 variable "sender_display_name" {
-  description = "Nom d'expediteur. Vide = \"<company_name> HR\", ex. Utrains HR."
+  description = "Sender name. Empty = \"<company_name> HR\"."
   type        = string
   default     = ""
 }
 
 variable "sender_local_part" {
-  description = "Partie gauche de l'expéditeur. Adresse finale = <local>@<root_domain>."
+  description = "Left part of the sender address. Final = <local>@<root_domain>."
   type        = string
   default     = "no-reply"
 }
 
 variable "app_subdomain" {
-  description = "Sous-domaine du portail. Site final = <app_subdomain>.<root_domain>."
+  description = "Portal subdomain. Site = <app_subdomain>.<root_domain>."
   type        = string
   default     = "resume"
 }
 
-
-# ─── 2.4 Base de données ─────────────────────────────────────────────────────
-# Ces identifiants alimentent À LA FOIS RDS et Secrets Manager, pour qu'ils ne
-# puissent pas diverger. En production, remplacez le mot de passe par une
-# valeur injectée hors du code (TF_VAR_db_password).
+# Feeds both RDS and Secrets Manager so they cannot drift apart. In production,
+# inject the password out of band with TF_VAR_db_password.
 variable "db_username" {
-  description = "Utilisateur maître de l'instance RDS PostgreSQL."
+  description = "RDS PostgreSQL master username."
   type        = string
   default     = "portaladmin"
 }
 
 variable "db_password" {
-  description = "Mot de passe maître RDS. Source unique partagée avec Secrets Manager."
+  description = "RDS master password. Single source shared with Secrets Manager."
   type        = string
   sensitive   = true
   default     = "utrains123!"
 
   validation {
     condition     = length(var.db_password) >= 8
-    error_message = "db_password doit faire au moins 8 caractères (exigence RDS)."
+    error_message = "db_password must be at least 8 characters (RDS requirement)."
   }
 }
 
-
-# ─── 2.5 Route 53 ────────────────────────────────────────────────────────────
-# À renseigner uniquement si vous avez PLUSIEURS zones hébergées portant le
-# même nom de domaine et qu'il faut lever l'ambiguïté.
+# Only needed when several hosted zones share the same domain name.
 variable "hosted_zone_id" {
-  description = "ID de zone Route 53 exact. Vide = recherche automatique par nom."
+  description = "Exact Route 53 zone id. Empty = look it up by name."
   type        = string
   default     = ""
 }

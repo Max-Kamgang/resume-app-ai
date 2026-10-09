@@ -2,67 +2,63 @@
 #  CONFIGURATION
 #
 #      cp terraform.tfvars.example terraform.tfvars
-#      # ouvrez terraform.tfvars et mettez VOS valeurs
+#      # open terraform.tfvars and put YOUR values in
 #      terraform init
 #      terraform apply
 #
-#  Si vous ne créez pas ce fichier, Terraform vous demandera simplement ces
-#  trois valeurs au lancement. C'est une invite, pas une erreur.
+#  If you skip this file, Terraform simply asks for the four values at launch.
+#  That is a prompt, not an error.
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-# ═══ LES TROIS VALEURS OBLIGATOIRES ══════════════════════════════════════════
+# ═══ THE FOUR REQUIRED VALUES ════════════════════════════════════════════════
 
-# 1. Votre nom de domaine.
+# 1. Your domain name.
 #
-#    PRÉREQUIS AVANT L'APPLY : une zone hébergée Route 53 doit déjà exister
-#    pour ce domaine dans CE compte AWS, et les serveurs de noms du domaine
-#    doivent pointer vers elle chez votre registrar.
+#    BEFORE THE APPLY: a Route 53 hosted zone must already exist for this
+#    domain in THIS AWS account, and your registrar must point at it.
 #
-#    Vérifiez (si rien ne s'affiche, créez la zone avant de continuer) :
-#      aws route53 list-hosted-zones-by-name --dns-name mondomaine.com
-root_domain = "mondomaine.com"
+#    Check (if nothing prints, create the zone first):
+#      aws route53 list-hosted-zones-by-name --dns-name example.com
+root_domain = "example.com"
 
-# 2. Votre vraie adresse email — une boîte que vous pouvez OUVRIR.
-#    AWS y enverra un lien de vérification : il faudra le cliquer.
-hr_email = "moi@gmail.com"
+# 2. Your real email address — an inbox you can OPEN.
+#    AWS will send a verification link there: you must click it.
+hr_email = "me@gmail.com"
 
-# 3. Le nom de votre société.
-#    Apparaît sur le site et compose l'expéditeur : « Utrains » → « Utrains HR ».
+# 3. Your company name.
+#    Shown on the site; also composes the sender: "Utrains" -> "Utrains HR".
 company_name = "Utrains"
 
-# 4. Votre clé API Gemini — gratuite sur https://aistudio.google.com/apikey
-#    C'est elle qui fait tourner l'analyse des CV.
-#    Terraform l'écrit dans /opt/rp-app/.env sur les serveurs.
-#    Ce fichier terraform.tfvars est exclu de Git par le .gitignore : ne l'y
-#    forcez jamais, la clé y est en clair.
-gemini_api_key = "AIzaSy..."
+# 4. Your Gemini API key — free at https://aistudio.google.com/apikey
+#    This is what powers the CV screening.
+#    Terraform writes it to /opt/rp-app/.env on the servers.
+#    terraform.tfvars is excluded from Git: the key is in clear text here.
+gemini_api_key = "PASTE-YOUR-GEMINI-KEY-HERE"
 
 
-# ═══ TOUT CE QUI SUIT EST FACULTATIF ═════════════════════════════════════════
-# Ces lignes sont commentées : les valeurs par défaut fonctionnent telles
-# quelles. Décommentez seulement ce que vous voulez changer.
+# ═══ EVERYTHING BELOW IS OPTIONAL ════════════════════════════════════════════
+# These lines are commented out: the defaults work as-is.
 
-# Région AWS. L'analyse IA passe par Gemini : la région n'a aucun effet dessus.
+# AWS region. Screening runs on Gemini, so the region does not affect it.
 # aws_region = "us-east-1"
 
-# Score (0-100) à partir duquel le candidat est invité en entretien.
-# Seuil inclusif : 80 accepte un score de 80, refuse 79.
+# Score (0-100) at or above which the candidate is invited to interview.
+# Inclusive: 80 accepts a score of 80 and rejects 79.
 # match_threshold = 80
 
-# Lien de prise de rendez-vous (Calendly, Meet, Teams…).
-# Laissé vide, l'email d'acceptation demande ses disponibilités au candidat.
-# interview_booking_url = "https://calendly.com/moi/entretien"
+# Scheduling link (Calendly, Meet, Teams...).
+# Empty: the acceptance email asks the candidate for their availability.
+# interview_booking_url = "https://calendly.com/me/interview"
 
-# Sous-domaine du portail. Site final = <app_subdomain>.<root_domain>
+# Portal subdomain. Site = <app_subdomain>.<root_domain>
 # app_subdomain = "resume"
 
-# Partie gauche de l'expéditeur. Adresse finale = <local>@<root_domain>
+# Left part of the sender address. Final = <local>@<root_domain>
 # sender_local_part = "no-reply"
 
-# Nom d'expéditeur. Vide = « <company_name> HR ».
-# sender_display_name = "Recrutement Utrains"
+# Sender name. Empty = "<company_name> HR".
+# sender_display_name = "Utrains Recruiting"
 
-# Modèle Gemini utilisé pour noter les CV.
-# Flash est rapide et peu coûteux, largement suffisant ici.
+# Gemini model used to score CVs.
 # gemini_model = "gemini-3.8-flash"

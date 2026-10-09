@@ -1,32 +1,26 @@
-# ─────────────────────────────────────────────
-# Ne JAMAIS commiter ce qui suit
-# ─────────────────────────────────────────────
-
-# Le state contient le mot de passe de la base EN CLAIR, ainsi que les
-# identifiants de toutes vos ressources. Le pousser sur GitHub revient à
-# publier vos secrets.
+# State holds the database password IN CLEAR, plus every resource id.
+# Pushing it to GitHub means publishing your secrets.
 terraform.tfstate
 terraform.tfstate.*
 *.tfstate
 *.tfstate.backup
 
-# La cle API Gemini. Elle ne doit JAMAIS partir dans un depot Git.
+# The Gemini API key. Never let this reach a Git repository.
 .env
 *.env
-!terraform.tfvars.example
 
-# Vos valeurs personnelles : domaine, email, nom de société, cle API.
-# terraform.tfvars.example reste versionné, lui : c'est le modèle à copier.
+# Your own values: domain, email, company name, API key.
+# terraform.tfvars.example stays versioned — it is the template to copy.
 terraform.tfvars
 *.auto.tfvars
 
-# Fichiers de travail Terraform
+# Terraform working files
 .terraform/
 .terraform.lock.hcl
 crash.log
 *.tfplan
 
-# Divers
+# Misc
 .DS_Store
 __pycache__/
 *.pyc

@@ -1,18 +1,11 @@
-# ─────────────────────────────────────────────
-# Domaine, certificat TLS et DNS
+# Domain, TLS certificate and DNS.
 #
-# PRÉREQUIS avant le premier apply : une zone hébergée Route 53 doit déjà
-# exister dans CE compte pour var.root_domain, et les serveurs de noms du
-# domaine doivent pointer vers elle chez votre registrar. Sans cela la
-# validation ACM ne peut pas aboutir.
+# Prerequisite before the first apply: a Route 53 hosted zone must already exist
+# in THIS account for var.root_domain, and the registrar must point at it.
+# ACM validates over public DNS, so there is no way around this.
 #
-#   Vérifiez :
-#     aws route53 list-hosted-zones-by-name --dns-name mondomaine.com
-# ─────────────────────────────────────────────
+#   aws route53 list-hosted-zones-by-name --dns-name example.com
 
-# ─── ZONE HÉBERGÉE ───────────────────────────────────────────────────────────
-# Doit déjà exister dans ce compte. Vérifiez avec :
-#   aws route53 list-hosted-zones-by-name --dns-name mondomaine.com
 data "aws_route53_zone" "rp_zone" {
 
   name         = var.root_domain
@@ -20,7 +13,6 @@ data "aws_route53_zone" "rp_zone" {
 }
 
 
-# ─── CERTIFICAT TLS ──────────────────────────────────────────────────────────
 resource "aws_acm_certificate" "rp_cert" {
 
   domain_name               = var.root_domain
@@ -35,7 +27,6 @@ resource "aws_acm_certificate" "rp_cert" {
 }
 
 
-# ─── VALIDATION DNS DU CERTIFICAT ────────────────────────────────────────────
 resource "aws_route53_record" "cert_validation" {
   for_each = {
     for dvo in aws_acm_certificate.rp_cert.domain_validation_options :
@@ -66,9 +57,7 @@ resource "aws_acm_certificate_validation" "rp_cert_validation" {
 }
 
 
-# ─── ENREGISTREMENT DNS DU PORTAIL ───────────────────────────────────────────
-# resume.<domaine> pointe vers l'ALB. Le site et l'API partagent la même
-# origine, ce qui évite toute configuration CORS.
+# The site and the API share one origin, which removes any need for CORS.
 resource "aws_route53_record" "rp_portal_record" {
 
   zone_id = data.aws_route53_zone.rp_zone.zone_id
