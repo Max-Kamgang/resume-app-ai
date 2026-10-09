@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carrières — Utrains</title>
+  <meta name="description" content="Offres d'emploi et candidature en ligne chez Utrains." />
+  <style>
+    /* Fonts are system stacks on purpose: no third-party CDN is contacted,
+       so no candidate IP address leaves our infrastructure. */
+    :root {
+      --paper:   #FBFAF8;
+      --surface: #FFFFFF;
+      --ink:     #16161A;
+      --body:    #3A3A42;
+      --muted:   #6E6E78;
+      --line:    #E3E1DB;
+      --line-2:  #D3D0C8;
+      --accent:  #15524A;
+      --accent-h:#0E3D37;
+      --accent-soft: #EDF3F1;
+      --danger:  #8C2F24;
+      --danger-soft: #FBF1EF;
+      --ok-soft: #F0F5F2;
+
+      --serif: Georgia, "Iowan Old Style", "Times New Roman", Times, serif;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+              "Helvetica Neue", Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--body);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+    @media (max-width: 600px) { .wrap { padding: 0 18px; } }
+
+    /* ── Header ─────────────────────────────── */
+    .site-header {
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
+    .site-header .wrap {
+      display: flex; align-items: baseline; justify-content: space-between;
+      padding-top: 20px; padding-bottom: 20px;
+    }
+    .wordmark {
+      font-family: var(--serif);
+      font-size: 23px; font-weight: 700; letter-spacing: -0.015em;
+      color: var(--ink);
+    }
+    .wordmark .dot { color: var(--accent); }
+    .site-header nav {
+      font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ── Hero ───────────────────────────────── */
+    .hero { padding: 56px 0 40px; border-bottom: 1px solid var(--line); }
+    .eyebrow {
+      font-size: 12px; letter-spacing: 0.13em; text-transform: uppercase;
+      color: var(--accent); font-weight: 600; margin: 0 0 14px;
+    }
+    .hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(30px, 4.4vw, 42px);
+      line-height: 1.15; letter-spacing: -0.02em;
+      color: var(--ink); margin: 0 0 16px; font-weight: 700;
+    }
+    .hero p { max-width: 58ch; margin: 0; color: var(--body); font-size: 16px; }
+
+    /* ── Layout ─────────────────────────────── */
+    .columns {
+      display: grid; grid-template-columns: 1fr 400px;
+      gap: 56px; align-items: start;
+      padding: 48px 0 72px;
+    }
+    @media (max-width: 940px) {
+      .columns { grid-template-columns: 1fr; gap: 36px; padding: 32px 0 56px; }
+    }
+
+    /* ── Job posting ────────────────────────── */
+    .posting-meta {
+      display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 22px; padding: 0; list-style: none;
+    }
+    .posting-meta li {
+      font-size: 12.5px; color: var(--accent); background: var(--accent-soft);
+      border: 1px solid #DCE8E4; border-radius: 3px; padding: 4px 10px;
+    }
+    .posting h2 {
+      font-family: var(--serif); font-size: 28px; line-height: 1.2;
+      color: var(--ink); margin: 0 0 14px; font-weight: 700; letter-spacing: -0.015em;
+    }
+    .posting h3 {
+      font-family: var(--sans); font-size: 12px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink);
+      margin: 32px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line);
+    }
+    .posting p { margin: 0 0 14px; max-width: 68ch; }
+    .posting ul:not(.posting-meta) { margin: 0 0 14px; padding-left: 0; list-style: none; max-width: 68ch; }
+    .posting ul:not(.posting-meta) li { position: relative; padding-left: 20px; margin-bottom: 9px; }
+    .posting ul:not(.posting-meta) li::before {
+      content: ""; position: absolute; left: 2px; top: 11px;
+      width: 6px; height: 1.5px; background: var(--accent-h);
+    }
+    .posting .empty { color: var(--muted); font-style: italic; }
+
+    /* ── Application card ───────────────────── */
+    .apply {
+      background: var(--surface);
+      border: 1px solid var(--line-2);
+      border-radius: 4px;
+      padding: 26px 24px 24px;
+    }
+    @media (min-width: 941px) { .apply { position: sticky; top: 28px; } }
+    .apply h2 {
+      font-family: var(--serif); font-size: 20px; color: var(--ink);
+      margin: 0 0 4px; font-weight: 700;
+    }
+    .apply .sub { font-size: 13px; color: var(--muted); margin: 0 0 22px; }
+
+    .stepline {
+      display: flex; gap: 20px; margin: 0 0 22px;
+      font-size: 12px; letter-spacing: 0.04em; color: var(--muted);
+      border-bottom: 1px solid var(--line); padding-bottom: 12px;
+    }
+    .stepline span { display: flex; align-items: center; gap: 7px; }
+    .stepline b {
+      display: grid; place-items: center;
+      width: 19px; height: 19px; border-radius: 50%;
+      border: 1px solid var(--line-2); font-size: 11px; font-weight: 600;
+      color: var(--muted); background: var(--surface);
+    }
+    .stepline .on { color: var(--ink); font-weight: 600; }
+    .stepline .on b { border-color: var(--accent); background: var(--accent); color: #fff; }
+    .stepline .done b { border-color: var(--accent); color: var(--accent); }
+
+    label.field { display: block; font-size: 13px; color: var(--ink); margin: 16px 0 6px; font-weight: 500; }
+    label.field:first-of-type { margin-top: 0; }
+    .req::after { content: " *"; color: var(--accent); font-weight: 600; }
+    .opt { color: var(--muted); font-weight: 400; }
+
+    input[type=text], input[type=email], input[type=tel], select {
+      width: 100%; padding: 9px 11px;
+      font-family: inherit; font-size: 14.5px; color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--line-2); border-radius: 3px;
+      transition: border-color .12s, box-shadow .12s;
+    }
+    select { cursor: pointer; }
+    input:focus, select:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(21,82,74,.10);
+    }
+    input.bad, select.bad { border-color: var(--danger); }
+    .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 430px) { .pair { grid-template-columns: 1fr; gap: 0; } }
+    .err { font-size: 12.5px; color: var(--danger); margin-top: 5px; min-height: 17px; }
+
+    .drop {
+      display: block; text-align: center; cursor: pointer;
+      border: 1px dashed var(--line-2); border-radius: 3px;
+      padding: 22px 16px; color: var(--muted); font-size: 13.5px;
+      background: #FCFCFB; transition: border-color .12s, background .12s;
+    }
+    .drop:hover { border-color: var(--accent); background: var(--accent-soft); }
+    .drop input { display: none; }
+    .drop u { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+    .drop .picked { color: var(--ink); font-weight: 500; }
+
+    .recap { border-top: 1px solid var(--line); margin-bottom: 4px; }
+    .recap div {
+      display: flex; justify-content: space-between; gap: 16px;
+      padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 13.5px;
+    }
+    .recap dt { color: var(--muted); }
+    .recap dd { margin: 0; color: var(--ink); text-align: right; word-break: break-word; }
+
+    .consent {
+      display: flex; gap: 10px; align-items: flex-start;
+      margin-top: 18px; font-size: 12.5px; line-height: 1.55; color: var(--body);
+      cursor: pointer;
+    }
+    .consent input { margin: 3px 0 0; flex: 0 0 auto; accent-color: var(--accent); }
+
+    .actions { display: flex; gap: 10px; margin-top: 22px; }
+    button {
+      flex: 1; padding: 11px 16px;
+      font-family: inherit; font-size: 14.5px; font-weight: 600;
+      color: #fff; background: var(--accent);
+      border: 1px solid var(--accent); border-radius: 3px; cursor: pointer;
+      transition: background .12s, border-color .12s;
+    }
+    button:hover:not(:disabled) { background: var(--accent-h); border-color: var(--accent-h); }
+    button:disabled { background: #B6BEBB; border-color: #B6BEBB; cursor: not-allowed; }
+    button.back {
+      flex: 0 0 auto; background: transparent; color: var(--muted);
+      border-color: var(--line-2); font-weight: 500;
+    }
+    button.back:hover { background: #F4F3F0; color: var(--ink); border-color: var(--line-2); }
+
+    .notice { margin-top: 16px; padding: 12px 14px; border-radius: 3px; font-size: 13.5px; display: none; }
+    .notice.bad { display: block; background: var(--danger-soft); border: 1px solid #E8CFC9; color: var(--danger); }
+
+    .done-panel { display: none; }
+    .done-panel.on { display: block; }
+    .done-panel .mark {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--accent); margin-bottom: 16px;
+      display: grid; place-items: center;
+    }
+    .done-panel .mark svg { display: block; }
+    .done-panel h3 {
+      font-family: var(--serif); font-size: 19px; color: var(--ink);
+      margin: 0 0 10px; font-weight: 700;
+    }
+    .done-panel p { margin: 0 0 12px; font-size: 14px; }
+    .done-panel .ref {
+      font-size: 13px; color: var(--muted);
+      background: var(--ok-soft); border: 1px solid #DDE7E2; border-radius: 3px;
+      padding: 9px 12px; margin-top: 4px;
+    }
+
+    /* ── Analyse en cours ─────────────────────── */
+    .analysing {
+      display: flex; align-items: center; gap: 10px;
+      margin: 16px 0 4px; font-size: 13.5px; color: var(--muted);
+    }
+    .spin {
+      width: 14px; height: 14px; flex: 0 0 auto;
+      border: 2px solid var(--line-2); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2.4s; } }
+
+    /* ── Carte de score ───────────────────────── */
+    .scorecard {
+      margin: 18px 0 4px; padding: 16px 18px;
+      border: 1px solid var(--line-2); border-radius: 4px; background: #FCFCFB;
+    }
+    .scorecard.ok  { background: var(--ok-soft);     border-color: #DDE7E2; }
+    .scorecard.no  { background: var(--danger-soft); border-color: #E8CFC9; }
+    .scorecard-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .scorelabel {
+      font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+    }
+    .scorevalue {
+      font-family: var(--serif); font-size: 34px; line-height: 1.1;
+      font-weight: 700; color: var(--ink); margin-top: 2px;
+    }
+    .scorecard.ok .scorevalue { color: var(--accent); }
+    .scorecard.no .scorevalue { color: var(--danger); }
+    .verdict {
+      font-size: 12px; font-weight: 600; padding: 5px 11px; border-radius: 999px;
+      white-space: nowrap; margin-top: 4px;
+    }
+    .scorecard.ok .verdict { background: var(--accent); color: #fff; }
+    .scorecard.no .verdict { background: var(--danger); color: #fff; }
+
+    /* Jauge : barre de remplissage + repère du seuil */
+    .meter {
+      position: relative; height: 6px; border-radius: 3px;
+      background: #E6E4DE; margin: 14px 0 8px; overflow: hidden;
+    }
+    .meter-fill { height: 100%; width: 0; border-radius: 3px; background: var(--muted); transition: width .5s ease; }
+    .scorecard.ok .meter-fill { background: var(--accent); }
+    .scorecard.no .meter-fill { background: var(--danger); }
+    .meter-mark { position: absolute; top: -2px; width: 2px; height: 10px; background: var(--ink); opacity: .45; }
+    .scorefoot { font-size: 12px; color: var(--muted); }
+    .scoresummary { font-size: 13.5px; margin: 12px 0 0; color: var(--body); }
+    .scorelist { margin: 12px 0 0; }
+    .scorelist h4 {
+      font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase;
+      color: var(--muted); margin: 0 0 5px; font-weight: 700;
+    }
+    .scorelist ul { margin: 0; padding-left: 18px; font-size: 13px; }
+    .scorelist li { margin-bottom: 4px; }
+
+    .legal {
+      font-size: 12px; color: var(--muted); line-height: 1.55;
+      margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line);
+    }
+
+    /* ── Footer ─────────────────────────────── */
+    .site-footer {
+      border-top: 1px solid var(--line); background: var(--surface);
+      padding: 34px 0; font-size: 12.5px; color: var(--muted);
+    }
+    .site-footer .cols {
+      display: grid; grid-template-columns: 1fr 2fr; gap: 40px;
+    }
+    @media (max-width: 700px) { .site-footer .cols { grid-template-columns: 1fr; gap: 22px; } }
+    .site-footer h4 {
+      font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--ink); margin: 0 0 9px; font-weight: 700;
+    }
+    .site-footer p { margin: 0 0 8px; max-width: 72ch; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="wrap">
+      <div class="wordmark">Utrains<span class="dot">.</span></div>
+      <nav>Carrières</nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="wrap">
+      <p class="eyebrow">Nous recrutons</p>
+      <h1>Construisons la plateforme qui fait tourner nos produits</h1>
+      <p>Nous sommes une équipe réduite qui conçoit, déploie et exploite ses propres
+         systèmes. Vous trouverez ci-dessous nos postes ouverts — chaque candidature est
+         lue, et vous recevez une réponse argumentée.</p>
+    </div>
+  </section>
+
+  <main class="wrap">
+    <div class="columns">
+
+      <!-- ── Fiche de poste ─────────────────── -->
+      <article class="posting" id="posting" aria-live="polite">
+        <p class="empty">Sélectionnez un poste pour afficher la fiche complète.</p>
+      </article>
+
+      <!-- ── Candidature ────────────────────── -->
+      <section class="apply">
+        <form id="form" novalidate>
+          <h2>Postuler</h2>
+          <p class="sub">Quelques minutes suffisent.</p>
+
+          <div class="stepline" id="stepline">
+            <span class="on" id="tab1"><b>1</b> Informations</span>
+            <span id="tab2"><b>2</b> CV &amp; envoi</span>
+          </div>
+
+          <!-- Étape 1 -->
+          <div id="step1">
+            <label class="field req" for="positionId">Poste</label>
+            <select id="positionId" required>
+              <option value="">Chargement…</option>
+            </select>
+            <div class="err" id="e-positionId"></div>
+
+            <div class="pair">
+              <div>
+                <label class="field req" for="lastName">Nom</label>
+                <input id="lastName" type="text" autocomplete="family-name" required />
+                <div class="err" id="e-lastName"></div>
+              </div>
+              <div>
+                <label class="field req" for="firstName">Prénom</label>
+                <input id="firstName" type="text" autocomplete="given-name" required />
+                <div class="err" id="e-firstName"></div>
+              </div>
+            </div>
+
+            <label class="field req" for="email">Adresse email</label>
+            <input id="email" type="email" autocomplete="email" required />
+            <div class="err" id="e-email"></div>
+
+            <label class="field" for="phone">Téléphone <span class="opt">— facultatif</span></label>
+            <input id="phone" type="tel" autocomplete="tel" />
+            <div class="err" id="e-phone"></div>
+
+            <div class="actions">
+              <button type="button" id="next" disabled>Continuer</button>
+            </div>
+          </div>
+
+          <!-- Étape 2 -->
+          <div id="step2" hidden>
+            <dl class="recap" id="recap"></dl>
+
+            <label class="field req" style="margin-top:18px">Curriculum vitae</label>
+            <label class="drop" for="resume" id="drop">
+              <input id="resume" type="file" accept="application/pdf" required />
+              Déposez votre CV ou <u>parcourez vos fichiers</u><br />
+              <span style="font-size:12px">PDF uniquement, 5 Mo maximum</span>
+            </label>
+            <div class="err" id="e-resume"></div>
+
+            <label class="consent" for="consent">
+              <input id="consent" type="checkbox" required />
+              <span>Je certifie l'exactitude des informations fournies et j'accepte que ma
+                    candidature, CV compris, fasse l'objet d'une analyse automatisée destinée
+                    à évaluer son adéquation avec le poste.</span>
+            </label>
+            <div class="err" id="e-consent"></div>
+
+            <div class="actions">
+              <button type="button" class="back" id="back">Retour</button>
+              <button type="submit" id="send" disabled>Envoyer ma candidature</button>
+            </div>
+          </div>
+
+          <div class="notice" id="notice"></div>
+
+          <!-- Confirmation + résultat de l'analyse -->
+          <div class="done-panel" id="done">
+            <div class="mark" aria-hidden="true">
+              <svg width="15" height="12" viewBox="0 0 15 12" fill="none">
+                <path d="M1.5 6.2L5.4 10 13.5 1.8" stroke="#fff" stroke-width="2"
+                      stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <h3 id="doneTitle">Votre candidature nous est parvenue</h3>
+            <p id="doneText"></p>
+
+            <!-- Analyse en cours -->
+            <div class="analysing" id="analysing" hidden>
+              <span class="spin" aria-hidden="true"></span>
+              <span>Analyse de votre CV en cours…</span>
+            </div>
+
+            <!-- Résultat : score + verdict -->
+            <div class="scorecard" id="scorecard" hidden>
+              <div class="scorecard-top">
+                <div>
+                  <div class="scorelabel">Taux de correspondance</div>
+                  <div class="scorevalue" id="scoreValue">—</div>
+                </div>
+                <div class="verdict" id="verdictChip"></div>
+              </div>
+              <div class="meter" aria-hidden="true">
+                <div class="meter-fill" id="meterFill"></div>
+                <div class="meter-mark" id="meterMark"></div>
+              </div>
+              <div class="scorefoot" id="scoreFoot"></div>
+              <p class="scoresummary" id="scoreSummary"></p>
+              <div id="scoreLists"></div>
+            </div>
+
+            <div class="ref" id="doneRef"></div>
+          </div>
+
+          <p class="legal">
+            Les données transmises sont utilisées pour le seul traitement de votre
+            candidature, conservées douze mois, et ne font l'objet d'aucune cession.
+            Vous disposez d'un droit d'accès, de rectification et d'effacement, ainsi que
+            du droit d'obtenir une intervention humaine sur la décision vous concernant.
+          </p>
+        </form>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap cols">
+      <div>
+        <div class="wordmark" style="font-size:18px">Utrains<span class="dot">.</span></div>
+        <p style="margin-top:8px">&copy; 2026 Utrains</p>
+      </div>
+      <div>
+        <h4>Protection des données</h4>
+        <p>Votre CV et vos coordonnées sont chiffrés au repos et en transit, et ne sont
+           accessibles qu'à l'équipe recrutement. Votre candidature fait l'objet d'une
+           analyse automatisée dont le résultat est systématiquement révisable par une
+           personne : répondez simplement à l'email reçu pour en faire la demande.</p>
+        <p>Pour exercer vos droits ou poser une question, écrivez à notre équipe
+           recrutement en répondant à l'email de confirmation.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const FIELDS = ["positionId", "lastName", "firstName", "email", "phone"];
+    const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[A-Za-z]{2,}$/;
+    const PHONE_RE = /^\+?[0-9 ().-]{8,20}$/;
+
+    const form = $("form"), sel = $("positionId"), file = $("resume"),
+          drop = $("drop"), consent = $("consent"), notice = $("notice"),
+          next = $("next"), send = $("send");
+
+    let JOBS = {};
+
+    const esc = (s) => String(s).replace(/[&<>"']/g,
+      (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+    // ── Rendu de la fiche de poste ─────────────────────────
+    // Le texte de l'offre vient de Terraform : lignes "- " en liste,
+    // lignes terminées par ":" en intertitre, le reste en paragraphe.
+    function renderPosting(id) {
+      const box = $("posting");
+      const job = JOBS[id];
+      if (!job) {
+        box.innerHTML = '<p class="empty">Sélectionnez un poste pour afficher la fiche complète.</p>';
+        return;
+      }
+      const meta = [job.contract, job.location, job.experience].filter(Boolean)
+        .map((m) => `<li>${esc(m)}</li>`).join("");
+
+      let html = "", list = [], para = [];
+      const flushList = () => {
+        if (list.length) { html += "<ul>" + list.join("") + "</ul>"; list = []; }
+      };
+      // Source paragraphs are hard-wrapped, so consecutive plain lines belong
+      // to one <p> and must be joined rather than emitted one by one.
+      const flushPara = () => {
+        if (para.length) { html += `<p>${esc(para.join(" "))}</p>`; para = []; }
+      };
+      // A heading is a SHORT line ending in a colon. The length test matters:
+      // French puts a space before ":", so ordinary sentences end that way too.
+      const isHeading = (l) => l.endsWith(":") && l.length <= 50;
+
+      for (const raw of (job.description || "").split("\n")) {
+        const line = raw.trim();
+        if (!line) { flushPara(); flushList(); continue; }
+        if (line.startsWith("- ")) {
+          flushPara();
+          list.push(`<li>${esc(line.slice(2))}</li>`);
+          continue;
+        }
+        flushList();
+        if (isHeading(line)) {
+          flushPara();
+          html += `<h3>${esc(line.replace(/\s*:$/, ""))}</h3>`;
+        } else {
+          para.push(line);
+        }
+      }
+      flushPara();
+      flushList();
+
+      box.innerHTML =
+        `<h2>${esc(job.title)}</h2>` +
+        (meta ? `<ul class="posting-meta">${meta}</ul>` : "") + html;
+    }
+
+    // ── Chargement des offres ──────────────────────────────
+    (async () => {
+      try {
+        const res = await fetch("/jobs");
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        sel.innerHTML = '<option value="">— Choisissez un poste —</option>';
+        for (const job of data.jobs) {
+          JOBS[job.id] = job;
+          const o = document.createElement("option");
+          o.value = job.id; o.textContent = job.title;
+          sel.appendChild(o);
+        }
+      } catch {
+        sel.innerHTML = '<option value="">Offres indisponibles</option>';
+        fail("Les offres n'ont pas pu être chargées. Rechargez la page dans un instant.");
+      }
+    })();
+
+    // ── Validation étape 1 ─────────────────────────────────
+    function errorFor(id) {
+      const v = $(id).value.trim();
+      if (id === "positionId") return v ? "" : "Choisissez un poste.";
+      if (id === "lastName")   return v.length >= 2 ? "" : "Indiquez votre nom.";
+      if (id === "firstName")  return v.length >= 2 ? "" : "Indiquez votre prénom.";
+      if (id === "email")      return EMAIL_RE.test(v) ? "" : "Adresse email invalide.";
+      if (id === "phone")      return !v || PHONE_RE.test(v) ? "" : "Numéro de téléphone invalide.";
+      return "";
+    }
+
+    function checkStep1(showAll) {
+      let ok = true;
+      for (const id of FIELDS) {
+        const e = errorFor(id);
+        if (e) ok = false;
+        const seen = showAll || $(id).dataset.seen === "1";
+        $("e-" + id).textContent = seen ? e : "";
+        $(id).classList.toggle("bad", Boolean(e) && seen);
+      }
+      next.disabled = !ok;
+      return ok;
+    }
+
+    for (const id of FIELDS) {
+      $(id).addEventListener("input", () => checkStep1(false));
+      $(id).addEventListener("blur", () => { $(id).dataset.seen = "1"; checkStep1(false); });
+    }
+    sel.addEventListener("change", () => renderPosting(sel.value));
+
+    // ── Navigation ─────────────────────────────────────────
+    function step(n) {
+      $("step1").hidden = n !== 1;
+      $("step2").hidden = n !== 2;
+      $("tab1").className = n === 1 ? "on" : "done";
+      $("tab2").className = n === 2 ? "on" : "";
+      notice.className = "notice";
+    }
+
+    next.addEventListener("click", () => {
+      if (!checkStep1(true)) return;
+      $("recap").innerHTML = [
+        ["Poste", sel.options[sel.selectedIndex].textContent],
+        ["Nom", $("lastName").value.trim()],
+        ["Prénom", $("firstName").value.trim()],
+        ["Email", $("email").value.trim()],
+        ["Téléphone", $("phone").value.trim() || "Non renseigné"],
+      ].map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("");
+      step(2);
+    });
+
+    $("back").addEventListener("click", () => step(1));
+
+    // ── Étape 2 ────────────────────────────────────────────
+    function checkStep2() {
+      const f = file.files[0];
+      let e = "";
+      if (f && f.type !== "application/pdf") e = "Le CV doit être un fichier PDF.";
+      else if (f && f.size > 5 * 1024 * 1024) e = "Le fichier dépasse 5 Mo.";
+      $("e-resume").textContent = e;
+      send.disabled = !f || Boolean(e) || !consent.checked;
+    }
+
+    file.addEventListener("change", () => {
+      const f = file.files[0];
+      // innerHTML détache l'input : on le replace, sinon le libellé
+      // cesse d'ouvrir le sélecteur après le premier choix.
+      drop.innerHTML = f
+        ? `<span class="picked">${esc(f.name)}</span><br /><span style="font-size:12px">${(f.size / 1048576).toFixed(2)} Mo — cliquez pour remplacer</span>`
+        : 'Déposez votre CV ou <u>parcourez vos fichiers</u><br /><span style="font-size:12px">PDF uniquement, 5 Mo maximum</span>';
+      drop.appendChild(file);
+      checkStep2();
+    });
+    consent.addEventListener("change", () => { $("e-consent").textContent = ""; checkStep2(); });
+
+    function fail(msg) { notice.className = "notice bad"; notice.textContent = msg; }
+
+    const toBase64 = (f) => new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(String(r.result).split(",")[1]);
+      r.onerror = () => rej(new Error("read"));
+      r.readAsDataURL(f);
+    });
+
+    // ── Suivi du résultat de l'analyse ─────────────────────
+    function renderResult(r) {
+      $("analysing").hidden = true;
+      const card = $("scorecard");
+      card.hidden = false;
+      card.className = "scorecard " + (r.accepted ? "ok" : "no");
+
+      $("scoreValue").textContent = r.matchScore + " %";
+      $("verdictChip").textContent = r.accepted ? "Candidature retenue" : "Non retenue";
+      $("meterFill").style.width = Math.max(0, Math.min(100, r.matchScore)) + "%";
+      $("meterMark").style.left = r.threshold + "%";
+      $("scoreFoot").textContent =
+        "Seuil d'acceptation : " + r.threshold + " %" +
+        (r.accepted ? "" : " — il manquait " + (r.threshold - r.matchScore) + " points.");
+      $("scoreSummary").textContent = r.summary || "";
+
+      $("doneTitle").textContent = r.accepted
+        ? "Votre candidature est retenue"
+        : "Suite donnée à votre candidature";
+      $("doneText").textContent = r.accepted
+        ? "Nous souhaitons vous rencontrer en entretien. Les modalités viennent de vous être envoyées par email."
+        : "Nous ne pouvons malheureusement pas donner suite. Le détail vient de vous être envoyé par email.";
+
+      // Les atouts motivent une acceptation, les écarts expliquent un refus :
+      // on n'affiche que la liste pertinente au verdict.
+      const items = r.accepted ? r.strengths : r.gaps;
+      const title = r.accepted ? "Points forts relevés" : "Éléments qui ont manqué";
+      $("scoreLists").innerHTML = items && items.length
+        ? `<div class="scorelist"><h4>${title}</h4><ul>` +
+          items.map((i) => `<li>${esc(i)}</li>`).join("") + "</ul></div>"
+        : "";
+    }
+
+    function renderNoVerdict(message) {
+      $("analysing").hidden = true;
+      $("doneText").textContent = message;
+    }
+
+    async function pollResult(appId, token) {
+      if (!token) return;
+      $("analysing").hidden = false;
+
+      const deadline = Date.now() + 120000;   // au-delà, l'email fera foi
+      let delay = 1500;
+
+      while (Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, delay));
+        delay = Math.min(delay * 1.3, 6000);  // on espace les appels
+        try {
+          const res = await fetch(
+            `/application/${appId}?token=${encodeURIComponent(token)}`);
+          if (!res.ok) return renderNoVerdict(
+            "Votre CV est en cours d'examen : vous recevrez notre réponse par email.");
+          const r = await res.json();
+          if (r.decided) return renderResult(r);
+          if (r.status === "SCREENING_FAILED") return renderNoVerdict(
+            "Votre dossier est transmis à notre équipe recrutement, qui l'étudiera " +
+            "personnellement et reviendra vers vous sous quelques jours ouvrés.");
+        } catch {
+          return renderNoVerdict(
+            "Votre CV est en cours d'examen : vous recevrez notre réponse par email.");
+        }
+      }
+      renderNoVerdict(
+        "L'analyse prend plus de temps que prévu. Vous recevrez notre réponse par email.");
+    }
+
+    // ── Envoi ──────────────────────────────────────────────
+    form.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      if (!checkStep1(true)) return step(1);
+      checkStep2();
+      if (send.disabled) return;
+
+      send.disabled = true;
+      const label = send.textContent;
+      send.textContent = "Envoi…";
+      notice.className = "notice";
+
+      try {
+        const res = await fetch("/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lastName:   $("lastName").value.trim(),
+            firstName:  $("firstName").value.trim(),
+            email:      $("email").value.trim(),
+            phone:      $("phone").value.trim(),
+            positionId: sel.value,
+            consent:    consent.checked,
+            resume:     await toBase64(file.files[0]),
+          }),
+        });
+        const body = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          if (body.fields) {
+            for (const [k, v] of Object.entries(body.fields)) {
+              const slot = $("e-" + k);
+              if (slot) slot.textContent = v;
+            }
+            send.disabled = false; send.textContent = label;
+            return fail("Certaines informations sont invalides. Vérifiez les champs signalés.");
+          }
+          throw new Error(body.error || res.status);
+        }
+
+        $("step1").hidden = true;
+        $("step2").hidden = true;
+        $("stepline").hidden = true;
+        $("tab2").className = "done";
+        $("doneText").textContent =
+          "Un email de confirmation vient d'être envoyé à " + $("email").value.trim() + ".";
+        $("doneRef").textContent = "Référence de votre dossier : " + body.applicationId;
+        $("done").classList.add("on");
+
+        // L'analyse tourne côté serveur hors du cycle requête/réponse : on
+        // interroge le statut jusqu'au verdict plutôt que de bloquer l'envoi.
+        pollResult(body.applicationId, body.statusToken);
+      } catch {
+        fail("L'envoi a échoué. Réessayez dans un instant.");
+        send.disabled = false;
+        send.textContent = label;
+      }
+    });
+
+    checkStep1(false);
+  </script>
+</body>
+</html>

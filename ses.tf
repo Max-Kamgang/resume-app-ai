@@ -1,0 +1,131 @@
+locals {
+  # Sous-domaine public du portail, ex. resume.mondomaine.com
+  app_fqdn = "${var.app_subdomain}.${var.root_domain}"
+
+  # Domaine de retour des rebonds et plaintes.
+  mail_from_domain = "mail.${var.root_domain}"
+
+  # Expediteur : no-reply@<domaine>, signe DKIM.
+  sender_email = "${var.sender_local_part}@${var.root_domain}"
+
+  # Nom affiche dans la boite du candidat. Derive du nom de la societe pour
+  # eviter de demander une information de plus : "Utrains" -> "Utrains HR".
+  # Surchargeable via var.sender_display_name si vous voulez autre chose.
+  sender_display_name = var.sender_display_name != "" ? var.sender_display_name : "${var.company_name} HR"
+
+  # Noms de buckets uniques mondialement (cf. var.bucket_suffix).
+  bucket_suffix   = var.bucket_suffix != "" ? var.bucket_suffix : data.aws_caller_identity.current.account_id
+  frontend_bucket = "rp-frontend-${local.bucket_suffix}"
+  resumes_bucket  = "rp-resumes-${local.bucket_suffix}"
+}
+
+
+# ─────────────────────────────────────────────
+# Configuration Set — regroupe les envois du portail
+# Regroupe les envois pour suivre la reputation separement.
+# ─────────────────────────────────────────────
+resource "aws_sesv2_configuration_set" "rp_ses_config_set" {
+  configuration_set_name = "rp-portal"
+
+  delivery_options {
+    tls_policy = "REQUIRE"
+  }
+
+  reputation_options {
+    reputation_metrics_enabled = true
+  }
+
+  sending_options {
+    sending_enabled = true
+  }
+
+  tags = {
+    Project = "ResumePortal"
+  }
+}
+
+
+# ─────────────────────────────────────────────
+# Identité email du recruteur
+#
+# Destinataire des reponses des candidats et des alertes quand l'analyse IA
+# echoue. Verifiee comme identite SES pour pouvoir recevoir du courrier tant
+# que le compte est en bac a sable.
+#
+# AWS envoie un lien de verification a cette adresse : il faut le cliquer.
+# ─────────────────────────────────────────────
+resource "aws_sesv2_email_identity" "rp_ses_identity" {
+  email_identity = var.hr_email
+
+  tags = {
+    Project = "ResumePortal"
+  }
+}
+
+
+# ─────────────────────────────────────────────
+# Identité de DOMAINE
+#
+# Permet d'expedier depuis no-reply@<domaine> plutot que depuis une boite
+# personnelle. Exige une zone Route 53 pour ce domaine dans ce compte.
+# ─────────────────────────────────────────────
+resource "aws_sesv2_email_identity" "rp_domain_identity" {
+
+  email_identity         = var.root_domain
+  configuration_set_name = aws_sesv2_configuration_set.rp_ses_config_set.configuration_set_name
+
+  dkim_signing_attributes {
+    next_signing_key_length = "RSA_2048_BIT"
+  }
+
+  tags = {
+    Project = "ResumePortal"
+  }
+}
+
+
+# ─── DKIM : 3 CNAME prouvant la propriété du domaine ─────────────────────────
+# Sans eux SES ne vérifie pas le domaine et chaque envoi échoue.
+resource "aws_route53_record" "rp_ses_dkim" {
+  count = 3
+
+  zone_id         = data.aws_route53_zone.rp_zone.zone_id
+  name            = "${element(aws_sesv2_email_identity.rp_domain_identity.dkim_signing_attributes[0].tokens, count.index)}._domainkey.${var.root_domain}"
+  type            = "CNAME"
+  ttl             = 600
+  records         = ["${element(aws_sesv2_email_identity.rp_domain_identity.dkim_signing_attributes[0].tokens, count.index)}.dkim.amazonses.com"]
+  allow_overwrite = true
+}
+
+
+# ─── MAIL FROM personnalisé ──────────────────────────────────────────────────
+# Les rebonds et plaintes reviennent sur notre propre domaine, ce qui aligne
+# SPF/DMARC et améliore la délivrabilité.
+resource "aws_sesv2_email_identity_mail_from_attributes" "rp_mail_from" {
+
+  email_identity         = aws_sesv2_email_identity.rp_domain_identity.email_identity
+  mail_from_domain       = local.mail_from_domain
+  behavior_on_mx_failure = "USE_DEFAULT_VALUE"
+}
+
+
+resource "aws_route53_record" "rp_ses_mail_from_mx" {
+
+  zone_id         = data.aws_route53_zone.rp_zone.zone_id
+  name            = local.mail_from_domain
+  type            = "MX"
+  ttl             = 600
+  records         = ["10 feedback-smtp.${data.aws_region.current.region}.amazonses.com"]
+  allow_overwrite = true
+}
+
+
+resource "aws_route53_record" "rp_ses_mail_from_spf" {
+
+  zone_id         = data.aws_route53_zone.rp_zone.zone_id
+  name            = local.mail_from_domain
+  type            = "TXT"
+  ttl             = 600
+  records         = ["v=spf1 include:amazonses.com ~all"]
+  allow_overwrite = true
+}

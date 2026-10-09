@@ -1,0 +1,68 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  CONFIGURATION
+#
+#      cp terraform.tfvars.example terraform.tfvars
+#      # ouvrez terraform.tfvars et mettez VOS valeurs
+#      terraform init
+#      terraform apply
+#
+#  Si vous ne créez pas ce fichier, Terraform vous demandera simplement ces
+#  trois valeurs au lancement. C'est une invite, pas une erreur.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+# ═══ LES TROIS VALEURS OBLIGATOIRES ══════════════════════════════════════════
+
+# 1. Votre nom de domaine.
+#
+#    PRÉREQUIS AVANT L'APPLY : une zone hébergée Route 53 doit déjà exister
+#    pour ce domaine dans CE compte AWS, et les serveurs de noms du domaine
+#    doivent pointer vers elle chez votre registrar.
+#
+#    Vérifiez (si rien ne s'affiche, créez la zone avant de continuer) :
+#      aws route53 list-hosted-zones-by-name --dns-name mondomaine.com
+root_domain = "mondomaine.com"
+
+# 2. Votre vraie adresse email — une boîte que vous pouvez OUVRIR.
+#    AWS y enverra un lien de vérification : il faudra le cliquer.
+hr_email = "moi@gmail.com"
+
+# 3. Le nom de votre société.
+#    Apparaît sur le site et compose l'expéditeur : « Utrains » → « Utrains HR ».
+company_name = "Utrains"
+
+# 4. Votre clé API Gemini — gratuite sur https://aistudio.google.com/apikey
+#    C'est elle qui fait tourner l'analyse des CV.
+#    Terraform l'écrit dans /opt/rp-app/.env sur les serveurs.
+#    Ce fichier terraform.tfvars est exclu de Git par le .gitignore : ne l'y
+#    forcez jamais, la clé y est en clair.
+gemini_api_key = "AIzaSy..."
+
+
+# ═══ TOUT CE QUI SUIT EST FACULTATIF ═════════════════════════════════════════
+# Ces lignes sont commentées : les valeurs par défaut fonctionnent telles
+# quelles. Décommentez seulement ce que vous voulez changer.
+
+# Région AWS. L'analyse IA passe par Gemini : la région n'a aucun effet dessus.
+# aws_region = "us-east-1"
+
+# Score (0-100) à partir duquel le candidat est invité en entretien.
+# Seuil inclusif : 80 accepte un score de 80, refuse 79.
+# match_threshold = 80
+
+# Lien de prise de rendez-vous (Calendly, Meet, Teams…).
+# Laissé vide, l'email d'acceptation demande ses disponibilités au candidat.
+# interview_booking_url = "https://calendly.com/moi/entretien"
+
+# Sous-domaine du portail. Site final = <app_subdomain>.<root_domain>
+# app_subdomain = "resume"
+
+# Partie gauche de l'expéditeur. Adresse finale = <local>@<root_domain>
+# sender_local_part = "no-reply"
+
+# Nom d'expéditeur. Vide = « <company_name> HR ».
+# sender_display_name = "Recrutement Utrains"
+
+# Modèle Gemini utilisé pour noter les CV.
+# Flash est rapide et peu coûteux, largement suffisant ici.
+# gemini_model = "gemini-3.8-flash"
