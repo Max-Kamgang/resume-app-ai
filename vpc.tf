@@ -87,6 +87,8 @@ resource "aws_subnet" "rp_private_1b" {
 # Elastic IP for NAT Gateway (1 AZ only)
 # ─────────────────────────────────────────────
 resource "aws_eip" "rp_nat_eip" {
+  count = var.enable_nat_gateway ? 1 : 0
+
   domain = "vpc"
 
 
@@ -100,7 +102,9 @@ resource "aws_eip" "rp_nat_eip" {
 # NAT Gateway — placed in public subnet 1a
 # ─────────────────────────────────────────────
 resource "aws_nat_gateway" "rp_nat" {
-  allocation_id = aws_eip.rp_nat_eip.id
+  count = var.enable_nat_gateway ? 1 : 0
+
+  allocation_id = aws_eip.rp_nat_eip[0].id
   subnet_id     = aws_subnet.rp_public_1a.id
 
 
@@ -158,9 +162,15 @@ resource "aws_route_table" "rp_private_rt" {
   vpc_id = aws_vpc.rp_vpc.id
 
 
-  route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.rp_nat.id
+  # No NAT, no default route. The table still exists and still carries the RDS
+  # subnets, which need no outbound access of their own.
+  dynamic "route" {
+    for_each = var.enable_nat_gateway ? [1] : []
+
+    content {
+      cidr_block     = "0.0.0.0/0"
+      nat_gateway_id = aws_nat_gateway.rp_nat[0].id
+    }
   }
 
 

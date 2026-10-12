@@ -41,8 +41,10 @@ resource "aws_lb_target_group_attachment" "rp_server_1" {
 
 
 resource "aws_lb_target_group_attachment" "rp_server_2" {
+  count = var.instance_count >= 2 ? 1 : 0
+
   target_group_arn = aws_lb_target_group.rp_targets.arn
-  target_id        = aws_instance.rp_server_2.id
+  target_id        = aws_instance.rp_server_2[0].id
   port             = 80
 }
 

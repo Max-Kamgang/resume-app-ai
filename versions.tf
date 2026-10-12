@@ -6,6 +6,15 @@ terraform {
       source  = "hashicorp/aws"
       version = "6.49.0"
     }
+
+    # Generates the HR portal password and the session signing key. Both must
+    # be identical on every instance — a per-boot value would sign out an HR
+    # user on each round trip through the load balancer — and neither belongs
+    # in the repository.
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.6"
+    }
   }
 }
 

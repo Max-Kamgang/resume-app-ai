@@ -56,6 +56,34 @@ resource "aws_s3_object" "rp_index_html" {
 }
 
 
+resource "aws_s3_object" "rp_admin_html" {
+  bucket       = aws_s3_bucket.rp_frontend.id
+  key          = "admin.html"
+  source       = "${path.module}/admin.html"
+  etag         = filemd5("${path.module}/admin.html")
+  content_type = "text/html"
+
+
+  tags = {
+    Project = "ResumePortal"
+  }
+}
+
+
+resource "aws_s3_object" "rp_schedule_html" {
+  bucket       = aws_s3_bucket.rp_frontend.id
+  key          = "schedule.html"
+  source       = "${path.module}/schedule.html"
+  etag         = filemd5("${path.module}/schedule.html")
+  content_type = "text/html"
+
+
+  tags = {
+    Project = "ResumePortal"
+  }
+}
+
+
 resource "aws_s3_object" "rp_app_py" {
   bucket       = aws_s3_bucket.rp_frontend.id
   key          = "app/app.py"

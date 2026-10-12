@@ -40,6 +40,50 @@ gemini_api_key = "PASTE-YOUR-GEMINI-KEY-HERE"
 # ═══ EVERYTHING BELOW IS OPTIONAL ════════════════════════════════════════════
 # These lines are commented out: the defaults work as-is.
 
+# ═══ A SMALLER STACK ═════════════════════════════════════════════════════════
+# Uncomment both lines to run the lighter variant.
+#
+# enable_nat_gateway = false
+# instance_count     = 1
+#
+# enable_nat_gateway = false
+#   Moves the servers out of the private subnets and into the public ones with
+#   a public IP. They stay unreachable from the internet - the security group
+#   only accepts port 80 from the load balancer and there is no SSH rule - but
+#   you lose the private-subnet posture the project is partly built to show.
+#
+# instance_count = 1
+#   Runs a single web server. The load balancer, the HTTPS termination and the
+#   health checks all still work with one target behind them.
+
+# ─── Email: Resend ───────────────────────────────────────────────────────────
+# Without a key the stack sends through Amazon SES, which starts every new AWS
+# account in a SANDBOX: you may only write to addresses verified one by one, so
+# a demo with real candidates is impossible.
+#
+# With a key, Resend sends instead, to anyone, as soon as the domain is
+# verified. SES stays configured as the fallback: if Resend refuses a message
+# the email still goes out, and the failure is logged as an error.
+#
+# Setup takes about five minutes - see "Step 3" in the README:
+#   1. Free account and API key at https://resend.com
+#   2. Domains -> Add Domain, enter your root_domain
+#   3. Copy the three records it prints into resend_dns_records below.
+#      Do NOT paste them into the AWS console: Terraform owns the Route 53
+#      zone and creates them for you.
+#   4. terraform apply, then click Verify in the Resend dashboard
+#
+# resend_api_key = "re_xxxxxxxxxxxxxxxxxxxx"
+#
+# Names are RELATIVE to root_domain: write "send", not "send.example.com".
+# The keys on the left are labels of your choosing.
+#
+# resend_dns_records = {
+#   dkim = { name = "resend._domainkey", type = "TXT",   value = "p=MIGfMA0GCSq..." }
+#   send = { name = "send",              type = "CNAME", value = "send.forge.rmta.net" }
+#   mail = { name = "rsend",             type = "CNAME", value = "rsend.forge.rmta.net" }
+# }
+
 # AWS region. Screening runs on Gemini, so the region does not affect it.
 # aws_region = "us-east-1"
 
@@ -47,9 +91,14 @@ gemini_api_key = "PASTE-YOUR-GEMINI-KEY-HERE"
 # Inclusive: 80 accepts a score of 80 and rejects 79.
 # match_threshold = 80
 
-# Scheduling link (Calendly, Meet, Teams...).
-# Empty: the acceptance email asks the candidate for their availability.
-# interview_booking_url = "https://calendly.com/me/interview"
+# HR portal logins for https://<app_subdomain>.<root_domain>/admin, where the
+# match score and the AI review live. Left out, Terraform creates a single "hr"
+# account; read its password with:
+#   terraform output -raw hr_portal_password
+# hr_portal_users = {
+#   amina = "a-long-password-here"
+#   serge = "another-long-password"
+# }
 
 # Portal subdomain. Site = <app_subdomain>.<root_domain>
 # app_subdomain = "resume"

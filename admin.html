@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Recruiting console — Utrains</title>
+  <style>
+    /* ───────────────────────────────────────────────────────────────────────
+       Tokens.
+
+       System fonts and inline SVG only: no CDN is contacted, so nothing about
+       who works here or who applied leaves our infrastructure.
+
+       Dark mode is a selected set of steps, not an inverted light one, and is
+       declared twice: once for the OS setting, once for the in-app toggle,
+       which must win either way.
+       ─────────────────────────────────────────────────────────────────────── */
+    :root {
+      color-scheme: light;
+
+      --page:      #F6F5F2;
+      --surface:   #FFFFFF;
+      --surface-2: #FBFAF8;
+      --sunken:    #F1EFEA;
+
+      --ink:       #16161A;   /* 18.0:1 on surface */
+      --ink-2:     #5B5B63;   /*  6.7:1 */
+      --muted:     #6E6E78;   /*  5.3:1 */
+      --faint:     #9A9992;
+
+      --line:      #E6E4DE;
+      --line-2:    #D5D2CA;
+
+      --accent:    #1E4E70;   /*  9.0:1 */
+      --accent-h:  #163B57;
+      --accent-wash: #EAF1F6;
+      --accent-ring: #C3D7E5;
+
+      /* Status palette: fixed roles, never themed. Each ships with a glyph and
+         a label — amber is 1.8:1 on white, so colour never carries meaning. */
+      --good:      #0ca30c;  --good-ink:  #006300;  --good-wash: #E8F5E8;
+      --warn:      #fab219;  --warn-ink:  #8A6410;  --warn-wash: #FBF2DC;
+      --crit:      #d03b3b;  --crit-ink:  #C0392B;  --crit-wash: #FBECEA;
+
+      --shadow-sm: 0 1px 2px rgba(22,22,26,.06);
+      --shadow-md: 0 4px 14px rgba(22,22,26,.08), 0 1px 3px rgba(22,22,26,.05);
+      --shadow-lg: -14px 0 40px rgba(22,22,26,.13);
+
+      --serif: Georgia, "Iowan Old Style", "Times New Roman", Times, serif;
+      --sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+              "Helvetica Neue", Arial, sans-serif;
+
+      --r-sm: 4px; --r-md: 7px; --r-lg: 11px;
+      --sidebar: 236px;
+      --drawer: 540px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:where(:not([data-theme="light"])) {
+        color-scheme: dark;
+        --page:      #121211;
+        --surface:   #1A1A19;
+        --surface-2: #201F1E;
+        --sunken:    #262523;
+
+        --ink:       #F5F4F0;
+        --ink-2:     #A8A79E;
+        --muted:     #9B9A91;
+        --faint:     #7C7B74;
+
+        --line:      #2C2C2A;
+        --line-2:    #3A3936;
+
+        --accent:    #8CBFE0;
+        --accent-h:  #A6CFEA;
+        --accent-wash: #16293A;
+        --accent-ring: #2C4E6B;
+
+        --good:      #0ca30c;  --good-ink:  #4ec94e;  --good-wash: #152915;
+        --warn:      #fab219;  --warn-ink:  #fab219;  --warn-wash: #2E2616;
+        --crit:      #d03b3b;  --crit-ink:  #e66767;  --crit-wash: #2E1A19;
+
+        --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+        --shadow-md: 0 4px 14px rgba(0,0,0,.45), 0 1px 3px rgba(0,0,0,.4);
+        --shadow-lg: -14px 0 40px rgba(0,0,0,.5);
+      }
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --page:      #121211;
+      --surface:   #1A1A19;
+      --surface-2: #201F1E;
+      --sunken:    #262523;
+
+      --ink:       #F5F4F0;
+      --ink-2:     #A8A79E;
+      --muted:     #9B9A91;
+      --faint:     #7C7B74;
+
+      --line:      #2C2C2A;
+      --line-2:    #3A3936;
+
+      --accent:    #8CBFE0;
+      --accent-h:  #A6CFEA;
+      --accent-wash: #16293A;
+      --accent-ring: #2C4E6B;
+
+      --good:      #0ca30c;  --good-ink:  #4ec94e;  --good-wash: #152915;
+      --warn:      #fab219;  --warn-ink:  #fab219;  --warn-wash: #2E2616;
+      --crit:      #d03b3b;  --crit-ink:  #e66767;  --crit-wash: #2E1A19;
+
+      --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+      --shadow-md: 0 4px 14px rgba(0,0,0,.45), 0 1px 3px rgba(0,0,0,.4);
+      --shadow-lg: -14px 0 40px rgba(0,0,0,.5);
+    }
+
+    /* ── Base ──────────────────────────────────────────────────────────── */
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--ink-2);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    svg { display: block; flex: 0 0 auto; }
+    ::selection { background: var(--accent-wash); }
+    /* A `display` rule on an id beats the UA's [hidden], which would leave the
+       login card and the console on screen at the same time. */
+    [hidden] { display: none !important; }
+
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: var(--r-sm);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+
+    button, input, select, textarea { font: inherit; color: inherit; }
+
+    .wordmark {
+      font-family: var(--serif); font-weight: 700; letter-spacing: -.02em;
+      color: var(--ink); font-size: 19px; line-height: 1;
+    }
+    .wordmark .dot { color: var(--accent); }
+
+    /* Micro-label: the only uppercase text in the interface. */
+    .eyebrow {
+      font-size: 10.5px; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--muted);
+    }
+
+    /* ── Login ─────────────────────────────────────────────────────────── */
+    #view-login {
+      min-height: 100%;
+      display: grid; place-items: center; padding: 32px 20px;
+    }
+    .login-card {
+      width: 100%; max-width: 376px;
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: var(--r-lg); padding: 32px;
+      box-shadow: var(--shadow-md);
+    }
+    .login-card .wordmark { font-size: 22px; }
+    .login-card h1 {
+      font-size: 19px; font-weight: 650; color: var(--ink);
+      margin: 26px 0 4px; letter-spacing: -.01em;
+    }
+    .login-card .sub { margin: 0 0 24px; color: var(--muted); font-size: 13.5px; }
+
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block; font-size: 12.5px; font-weight: 600;
+      color: var(--ink); margin-bottom: 6px;
+    }
+    .input {
+      width: 100%; background: var(--surface); color: var(--ink);
+      border: 1px solid var(--line-2); border-radius: var(--r-md);
+      padding: 9px 12px; font-size: 14px;
+      transition: border-color .12s, box-shadow .12s;
+    }
+    .input::placeholder { color: var(--faint); }
+    .input:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-wash);
+    }
+    textarea.input { resize: vertical; min-height: 78px; line-height: 1.5; }
+
+    /* ── Buttons ───────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      font-size: 13.5px; font-weight: 600; line-height: 1;
+      padding: 9px 14px; border-radius: var(--r-md);
+      border: 1px solid transparent; background: none; cursor: pointer;
+      text-decoration: none;
+      transition: background-color .12s, border-color .12s, color .12s;
+      white-space: nowrap;
+    }
+    .btn:disabled { opacity: .45; cursor: default; }
+    .btn-primary { background: var(--accent); color: var(--page); }
+    :root[data-theme="dark"] .btn-primary,
+    .btn-primary { color: #fff; }
+    @media (prefers-color-scheme: dark) {
+      :root:where(:not([data-theme="light"])) .btn-primary { color: #0C2234; }
+    }
+    :root[data-theme="dark"] .btn-primary { color: #0C2234; }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-h); }
+    .btn-quiet {
+      background: var(--surface); border-color: var(--line-2); color: var(--ink);
+    }
+    .btn-quiet:hover:not(:disabled) { background: var(--sunken); }
+    .btn-danger { background: var(--crit); color: #fff; }
+    .btn-danger:hover:not(:disabled) { filter: brightness(.92); }
+    .btn-block { width: 100%; }
+    .btn-icon {
+      padding: 7px; border-radius: var(--r-md); color: var(--muted);
+      border-color: transparent;
+    }
+    .btn-icon:hover { background: var(--sunken); color: var(--ink); }
+
+    /* ── App shell ─────────────────────────────────────────────────────── */
+    #view-app { display: grid; grid-template-columns: var(--sidebar) 1fr; min-height: 100%; }
+
+    .sidebar {
+      background: var(--surface-2); border-right: 1px solid var(--line);
+      display: flex; flex-direction: column;
+      position: sticky; top: 0; height: 100vh;
+    }
+    .sidebar-head {
+      padding: 18px 18px 14px; display: flex; align-items: center;
+      justify-content: space-between; gap: 8px;
+    }
+    .sidebar-head .tagline {
+      font-size: 10.5px; font-weight: 600; letter-spacing: .09em;
+      text-transform: uppercase; color: var(--muted); margin-top: 5px;
+    }
+    .nav { padding: 6px 10px; flex: 1 1 auto; overflow-y: auto; }
+    .nav-label { padding: 12px 8px 6px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 9px; width: 100%;
+      padding: 7px 8px; border-radius: var(--r-md);
+      font-size: 13.5px; color: var(--ink-2); cursor: pointer;
+      border: none; background: none; text-align: left;
+      transition: background-color .12s, color .12s;
+    }
+    .nav-item:hover { background: var(--sunken); color: var(--ink); }
+    .nav-item[aria-current="true"] {
+      background: var(--accent-wash); color: var(--accent); font-weight: 600;
+    }
+    .nav-item .n {
+      margin-left: auto; font-size: 11.5px; font-weight: 600;
+      color: var(--muted); font-variant-numeric: tabular-nums;
+      background: var(--sunken); border-radius: 999px; padding: 1px 7px;
+      min-width: 22px; text-align: center;
+    }
+    .nav-item[aria-current="true"] .n { background: var(--surface); color: var(--accent); }
+    .nav-item .dot-s { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; }
+
+    .sidebar-foot { border-top: 1px solid var(--line); padding: 12px; }
+    .user-row { display: flex; align-items: center; gap: 9px; }
+    .user-row .meta { min-width: 0; flex: 1 1 auto; }
+    .user-row .name {
+      font-size: 13px; font-weight: 600; color: var(--ink);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .user-row .role { font-size: 11.5px; color: var(--muted); }
+
+    .avatar {
+      width: 28px; height: 28px; border-radius: 50%; flex: 0 0 auto;
+      background: var(--accent-wash); color: var(--accent);
+      display: grid; place-items: center;
+      font-size: 11px; font-weight: 700; letter-spacing: .02em;
+      border: 1px solid var(--accent-ring);
+    }
+    .avatar.lg { width: 38px; height: 38px; font-size: 13.5px; }
+
+    /* ── Main column ───────────────────────────────────────────────────── */
+    .main { min-width: 0; display: flex; flex-direction: column; }
+    .topbar {
+      position: sticky; top: 0; z-index: 20;
+      background: color-mix(in srgb, var(--page) 88%, transparent);
+      backdrop-filter: saturate(1.6) blur(8px);
+      border-bottom: 1px solid var(--line);
+      padding: 12px 24px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .topbar h1 {
+      font-size: 16px; font-weight: 650; color: var(--ink);
+      margin: 0; letter-spacing: -.01em; white-space: nowrap;
+    }
+    .search {
+      position: relative; margin-left: auto; width: min(320px, 42vw);
+    }
+    .count {
+      font-size: 12.5px; color: var(--muted); white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .search svg { position: absolute; left: 10px; top: 9px; color: var(--faint); }
+    .search .input { padding-left: 32px; padding-right: 34px; }
+    .search kbd {
+      position: absolute; right: 9px; top: 8px;
+      font: 600 10.5px/1.6 var(--sans); color: var(--faint);
+      border: 1px solid var(--line-2); border-radius: var(--r-sm);
+      padding: 0 5px; background: var(--surface-2); pointer-events: none;
+    }
+    .search:focus-within kbd { display: none; }
+
+    .content { padding: 22px 24px 40px; }
+
+    /* ── Table ─────────────────────────────────────────────────────────── */
+    .panel {
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: var(--r-lg); overflow: hidden;
+    }
+    /* Sticky headers resolve against the nearest scroll container, so the
+       horizontal scroller only exists where the table cannot fit. */
+    .table-scroll { overflow-x: visible; }
+    table { width: 100%; border-collapse: collapse; min-width: 720px; }
+    thead th {
+      text-align: left; padding: 9px 16px;
+      background: var(--surface-2); border-bottom: 1px solid var(--line);
+      font-size: 11px; font-weight: 700; letter-spacing: .07em;
+      text-transform: uppercase; color: var(--muted); white-space: nowrap;
+    }
+    tbody td {
+      padding: 11px 16px; border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+    }
+    tbody tr { cursor: pointer; transition: background-color .1s; }
+    tbody tr:hover { background: var(--surface-2); }
+    tbody tr[aria-selected="true"] { background: var(--accent-wash); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    .cell-cand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+    .cell-cand .nm {
+      font-weight: 600; color: var(--ink); font-size: 13.5px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .cell-cand .em {
+      font-size: 12px; color: var(--muted);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .nowrap { white-space: nowrap; }
+    .t-sub { font-size: 12.5px; color: var(--muted); }
+
+    /* ── Score meter ───────────────────────────────────────────────────
+       A ratio against a limit: the fill carries the pass/fail the bot acted
+       on, the track is a lighter step of that same hue, and the notch marks
+       the threshold so the limit is visible rather than implied. */
+    .meter { display: flex; align-items: center; gap: 10px; }
+    .meter-track {
+      position: relative; width: 62px; height: 5px; border-radius: 999px;
+      background: var(--m-track); overflow: hidden; flex: 0 0 auto;
+    }
+    .meter-fill {
+      position: absolute; inset: 0 auto 0 0; background: var(--m-fill);
+      border-radius: 0 3px 3px 0;
+    }
+    .meter-limit {
+      position: absolute; top: -1px; bottom: -1px; width: 2px;
+      background: var(--surface); transform: translateX(-1px);
+    }
+    .meter-value {
+      font-size: 13.5px; font-weight: 650; color: var(--ink);
+      font-variant-numeric: tabular-nums; min-width: 22px;
+    }
+    .meter.pass  { --m-fill: var(--good); --m-track: var(--good-wash); }
+    .meter.fail  { --m-fill: var(--crit); --m-track: var(--crit-wash); }
+    .meter.blank { --m-fill: transparent; --m-track: var(--sunken); }
+    .meter.blank .meter-value { color: var(--faint); font-weight: 400; }
+    tbody tr:hover .meter-limit,
+    tbody tr[aria-selected="true"] .meter-limit { background: var(--surface-2); }
+
+    /* ── Status pill: glyph + label, never colour alone ────────────────── */
+    .pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11.5px; font-weight: 600; line-height: 1;
+      padding: 4px 9px 4px 7px; border-radius: 999px;
+      border: 1px solid transparent; white-space: nowrap;
+    }
+    .pill svg { width: 12px; height: 12px; }
+    .pill.s-good    { background: var(--good-wash); color: var(--good-ink); border-color: color-mix(in srgb, var(--good) 28%, transparent); }
+    .pill.s-warn    { background: var(--warn-wash); color: var(--warn-ink); border-color: color-mix(in srgb, var(--warn) 34%, transparent); }
+    .pill.s-crit    { background: var(--crit-wash); color: var(--crit-ink); border-color: color-mix(in srgb, var(--crit) 28%, transparent); }
+    .pill.s-accent  { background: var(--accent-wash); color: var(--accent); border-color: var(--accent-ring); }
+    .pill.s-neutral { background: var(--sunken); color: var(--ink-2); border-color: var(--line-2); }
+
+    .flag {
+      display: inline-flex; align-items: center; gap: 4px;
+      margin-left: 7px; font-size: 10.5px; font-weight: 700;
+      letter-spacing: .05em; text-transform: uppercase; color: var(--warn-ink);
+    }
+    .flag svg { width: 11px; height: 11px; }
+
+    /* ── Empty & skeleton ──────────────────────────────────────────────── */
+    .empty { padding: 56px 24px; text-align: center; }
+    .empty .ico {
+      width: 40px; height: 40px; border-radius: 50%; margin: 0 auto 14px;
+      background: var(--sunken); color: var(--faint); display: grid; place-items: center;
+    }
+    .empty h3 { font-size: 14.5px; font-weight: 650; color: var(--ink); margin: 0 0 4px; }
+    .empty p { margin: 0; font-size: 13px; color: var(--muted); }
+
+    .skel { background: var(--sunken); border-radius: var(--r-sm); height: 11px;
+            animation: pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+
+    /* ── Drawer ────────────────────────────────────────────────────────── */
+    .scrim {
+      position: fixed; inset: 0; z-index: 40; background: rgba(12,12,11,.34);
+      opacity: 0; pointer-events: none; transition: opacity .18s;
+    }
+    .scrim.on { opacity: 1; pointer-events: auto; }
+    .drawer {
+      position: fixed; top: 0; right: 0; bottom: 0; z-index: 50;
+      width: min(var(--drawer), 100vw);
+      background: var(--surface); border-left: 1px solid var(--line);
+      box-shadow: var(--shadow-lg);
+      transform: translateX(100%); transition: transform .2s cubic-bezier(.32,.72,0,1);
+      display: flex; flex-direction: column;
+    }
+    .drawer.on { transform: none; }
+    .drawer-head {
+      padding: 16px 20px; border-bottom: 1px solid var(--line);
+      display: flex; align-items: flex-start; gap: 12px;
+    }
+    .drawer-head .who { min-width: 0; flex: 1 1 auto; }
+    .drawer-head h2 {
+      font-size: 17px; font-weight: 650; color: var(--ink);
+      margin: 0 0 2px; letter-spacing: -.01em;
+    }
+    .drawer-body { overflow-y: auto; padding: 20px; flex: 1 1 auto; }
+
+    .sect + .sect { margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--line); }
+    .sect-head { display: flex; align-items: center; gap: 7px; margin-bottom: 12px; }
+    .sect-head svg { width: 13px; height: 13px; color: var(--muted); }
+
+    /* Hero figure: the one number this view leads with. Sans, proportional. */
+    .verdict {
+      display: flex; align-items: center; gap: 16px;
+      background: var(--surface-2); border: 1px solid var(--line);
+      border-radius: var(--r-lg); padding: 15px 17px;
+    }
+    .verdict .fig {
+      font-size: 42px; font-weight: 650; line-height: .95;
+      letter-spacing: -.03em; color: var(--ink);
+    }
+    .verdict .side { flex: 1 1 auto; min-width: 0; }
+    .verdict .meter-track { width: 100%; height: 8px; }
+    .verdict .meter-fill { border-radius: 0 4px 4px 0; }
+    .verdict .meter-limit { background: var(--surface-2); }
+    .verdict .cap { font-size: 11.5px; color: var(--muted); margin-top: 7px; }
+
+    .prose { font-size: 13.5px; color: var(--ink-2); margin: 13px 0 0; }
+    .findings { list-style: none; margin: 10px 0 0; padding: 0; }
+    .findings li {
+      display: flex; gap: 8px; font-size: 13px; margin-bottom: 7px;
+      color: var(--ink-2);
+    }
+    .findings svg { width: 13px; height: 13px; margin-top: 3px; }
+    .findings.pos svg { color: var(--good); }
+    .findings.neg svg { color: var(--crit); }
+
+    .kv { display: grid; grid-template-columns: 92px 1fr; gap: 7px 12px; font-size: 13px; }
+    .kv dt { color: var(--muted); }
+    .kv dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+    .kv a { color: var(--accent); text-decoration: none; }
+    .kv a:hover { text-decoration: underline; }
+
+    .audit {
+      font-size: 11.5px; color: var(--muted); margin-top: 14px;
+      padding-top: 11px; border-top: 1px dashed var(--line-2);
+      display: flex; flex-wrap: wrap; gap: 4px 12px;
+    }
+    .audit b { color: var(--ink-2); font-weight: 600; }
+
+    .slots { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+    .slots li {
+      display: flex; align-items: center; gap: 9px;
+      background: var(--surface-2); border: 1px solid var(--line);
+      border-radius: var(--r-md); padding: 8px 11px; font-size: 13px;
+      color: var(--ink);
+    }
+    .slots svg { width: 13px; height: 13px; color: var(--accent); }
+
+    .callout {
+      font-size: 12.5px; color: var(--muted);
+      background: var(--surface-2); border: 1px dashed var(--line-2);
+      border-radius: var(--r-md); padding: 11px 13px;
+    }
+
+    .switch { display: flex; align-items: flex-start; gap: 9px; font-size: 13px; margin: 13px 0 15px; }
+    .switch input { margin: 3px 0 0; accent-color: var(--accent); width: 15px; height: 15px; }
+    .switch .hint { display: block; color: var(--muted); font-size: 12px; }
+    .decide-row { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+
+    /* ── AI review ─────────────────────────────────────────────────────── */
+    .banner {
+      display: flex; gap: 10px; align-items: flex-start;
+      background: var(--crit-wash); border: 1px solid var(--crit);
+      border-radius: var(--r-md); padding: 11px 13px; margin-bottom: 16px;
+      font-size: 13px; color: var(--crit-ink);
+    }
+    .banner svg { width: 15px; height: 15px; margin-top: 1px; }
+    .banner b { display: block; margin-bottom: 2px; }
+    .banner q { color: var(--ink-2); font-style: italic; }
+
+    .conf {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 700; letter-spacing: .05em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .conf i {
+      width: 5px; height: 11px; border-radius: 1px; background: var(--line-2);
+      display: inline-block;
+    }
+    .conf i.on { background: var(--accent); }
+
+    .facts {
+      display: flex; flex-wrap: wrap; gap: 0 22px;
+      padding: 12px 0; margin-top: 2px;
+      border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+    }
+    .facts .f .k {
+      font-size: 10.5px; font-weight: 700; letter-spacing: .09em;
+      text-transform: uppercase; color: var(--muted);
+    }
+    .facts .f .v { font-size: 15px; font-weight: 650; color: var(--ink); }
+    .chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+    .chip {
+      font-size: 11.5px; font-weight: 600; color: var(--ink-2);
+      background: var(--sunken); border: 1px solid var(--line);
+      border-radius: var(--r-sm); padding: 2px 7px;
+    }
+
+    /* Requirement-by-requirement review: the part that lets a recruiter check
+       the score instead of trusting it. */
+    .review { list-style: none; margin: 10px 0 0; padding: 0; }
+    .review li { padding: 9px 0; border-bottom: 1px solid var(--line); }
+    .review li:last-child { border-bottom: none; }
+    .review .top { display: flex; align-items: flex-start; gap: 8px; }
+    .review .top svg { width: 14px; height: 14px; margin-top: 2px; }
+    .review .req { font-size: 13px; font-weight: 600; color: var(--ink); flex: 1 1 auto; }
+    .review .must {
+      font-size: 9.5px; font-weight: 700; letter-spacing: .07em;
+      text-transform: uppercase; color: var(--muted); margin-top: 3px;
+      border: 1px solid var(--line-2); border-radius: var(--r-sm);
+      padding: 1px 5px; white-space: nowrap;
+    }
+    .review .ev {
+      font-size: 12.5px; color: var(--muted); margin: 4px 0 0 22px;
+      border-left: 2px solid var(--line-2); padding-left: 9px;
+    }
+    .review .met     svg { color: var(--good); }
+    .review .partial svg { color: var(--warn); }
+    .review .missing svg { color: var(--crit); }
+
+    .probe { list-style: none; margin: 10px 0 0; padding: 0; counter-reset: q; }
+    .probe li {
+      display: flex; gap: 10px; font-size: 13px; color: var(--ink-2);
+      margin-bottom: 9px;
+    }
+    .probe li::before {
+      counter-increment: q; content: counter(q);
+      flex: 0 0 auto; width: 19px; height: 19px; border-radius: 50%;
+      background: var(--accent-wash); color: var(--accent);
+      font-size: 10.5px; font-weight: 700; display: grid; place-items: center;
+      margin-top: 1px;
+    }
+
+    .told {
+      background: var(--surface-2); border: 1px solid var(--line);
+      border-radius: var(--r-md); padding: 13px 15px; margin-top: 10px;
+    }
+    .told .cap { font-size: 11.5px; color: var(--muted); margin: 0 0 8px; }
+
+    .rerun {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+      margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--line);
+    }
+    .rerun .note { font-size: 12px; color: var(--muted); flex: 1 1 150px; }
+    .rerun .check { margin: 0; font-size: 12.5px; }
+
+    .spin { animation: turn 1s linear infinite; transform-origin: 50% 50%; }
+    @keyframes turn { to { transform: rotate(360deg); } }
+
+    .working {
+      display: flex; align-items: center; gap: 9px;
+      background: var(--accent-wash); border: 1px solid var(--accent-ring);
+      border-radius: var(--r-md); padding: 10px 13px; margin-bottom: 16px;
+      font-size: 13px; color: var(--accent); font-weight: 600;
+    }
+
+    /* ── Toasts ────────────────────────────────────────────────────────── */
+    .toasts {
+      position: fixed; right: 18px; bottom: 18px; z-index: 60;
+      display: grid; gap: 9px; max-width: min(380px, calc(100vw - 36px));
+    }
+    .toast {
+      display: flex; gap: 10px; align-items: flex-start;
+      background: var(--surface); border: 1px solid var(--line-2);
+      border-radius: var(--r-lg); padding: 12px 14px;
+      box-shadow: var(--shadow-md); font-size: 13px; color: var(--ink);
+      animation: rise .22s cubic-bezier(.32,.72,0,1);
+    }
+    @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+    .toast svg { width: 15px; height: 15px; margin-top: 1px; }
+    .toast.ok svg  { color: var(--good); }
+    .toast.bad svg { color: var(--crit); }
+    .toast .msg { flex: 1 1 auto; }
+    .toast .msg b { display: block; font-weight: 650; }
+    .toast .msg span { color: var(--muted); font-size: 12.5px; }
+
+    .form-error {
+      font-size: 13px; color: var(--crit-ink); background: var(--crit-wash);
+      border: 1px solid color-mix(in srgb, var(--crit) 28%, transparent);
+      border-radius: var(--r-md); padding: 9px 12px; margin-top: 14px;
+      display: flex; gap: 8px; align-items: flex-start;
+    }
+    .form-error svg { width: 14px; height: 14px; margin-top: 2px; }
+    .form-error:empty { display: none; }
+
+    /* ── Responsive ────────────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      #view-app { grid-template-columns: 1fr; }
+      .sidebar {
+        position: static; height: auto; border-right: none;
+        border-bottom: 1px solid var(--line);
+      }
+      .nav { display: flex; gap: 6px; overflow-x: auto; padding: 8px 12px; }
+      .nav-label { display: none; }
+      .nav-item { width: auto; white-space: nowrap; }
+      .sidebar-foot { position: absolute; top: 12px; right: 12px; border: none; padding: 0; }
+      .user-row .meta { display: none; }
+      .topbar { padding: 10px 16px; }
+      .topbar h1 { display: none; }
+      .search { width: 100%; margin-left: 0; }
+      .content { padding: 16px; }
+      .table-scroll { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Login ─────────────────────────────────────────────────────────── -->
+<main id="view-login" hidden>
+  <form class="login-card" id="loginForm">
+    <div class="wordmark">Utrains<span class="dot">.</span></div>
+    <h1>Recruiting console</h1>
+    <p class="sub">Internal access. Candidate scores and AI assessments are
+      visible here and nowhere else.</p>
+
+    <div class="field">
+      <label for="u">Username</label>
+      <input class="input" id="u" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" />
+    </div>
+    <div class="field">
+      <label for="p">Password</label>
+      <input class="input" id="p" type="password" autocomplete="current-password" />
+    </div>
+    <button class="btn btn-primary btn-block" id="login" type="submit" style="margin-top:8px">Sign in</button>
+    <div class="form-error" id="loginError"></div>
+  </form>
+</main>
+
+<!-- ── Console ───────────────────────────────────────────────────────── -->
+<div id="view-app" hidden>
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <div>
+        <div class="wordmark">Utrains<span class="dot">.</span></div>
+        <div class="tagline">Recruiting</div>
+      </div>
+      <button class="btn btn-icon" id="theme" title="Switch theme" aria-label="Switch theme"></button>
+    </div>
+
+    <nav class="nav" id="nav" aria-label="Filter by status">
+      <div class="eyebrow nav-label">Pipeline</div>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="user-row">
+        <div class="avatar" id="meAvatar"></div>
+        <div class="meta">
+          <div class="name" id="meName"></div>
+          <div class="role">HR · signed in</div>
+        </div>
+        <button class="btn btn-icon" id="logout" title="Sign out" aria-label="Sign out"></button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <h1 id="pageTitle">Applications</h1>
+      <div class="search">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.6"/><path d="M10.4 10.4 14 14" stroke-linecap="round"/></svg>
+        <input class="input" id="q" type="search" placeholder="Search name, email or role" aria-label="Search applications" />
+        <kbd>/</kbd>
+      </div>
+      <span class="count" id="count"></span>
+      <button class="btn btn-quiet" id="refresh">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8a6 6 0 1 1-1.8-4.3"/><path d="M14 2v3.6h-3.6"/></svg>
+        Refresh
+      </button>
+    </header>
+
+    <div class="content">
+      <section class="panel">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:34%">Candidate</th>
+                <th style="width:22%">Role</th>
+                <th style="width:16%">Match score</th>
+                <th style="width:19%">Status</th>
+                <th style="width:9%" class="nowrap">Received</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <div id="tableState"></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Application detail" hidden></aside>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+"use strict";
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g,
+  (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+/* ── Icons: inline so no icon font or CDN is ever fetched ─────────────── */
+const I = {
+  check:  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m3 8.4 3.2 3.2L13 4.8"/></svg>',
+  circleCheck: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.4"/><path d="m5.3 8.2 1.9 1.9L10.8 6"/></svg>',
+  x:      '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8" cy="8" r="6.4"/><path d="m5.8 5.8 4.4 4.4M10.2 5.8 5.8 10.2"/></svg>',
+  minus:  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M3.6 8h8.8"/></svg>',
+  clock:  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.4"/><path d="M8 4.4V8l2.4 1.5"/></svg>',
+  alert:  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2.2 14.4 13H1.6z"/><path d="M8 6.4v3M8 11.3h.01"/></svg>',
+  send:   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2 7.3 8.7M14 2l-4.3 12-2.4-5.3L2 6.3z"/></svg>',
+  calendar:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3.2" width="12" height="10.8" rx="1.6"/><path d="M2 6.6h12M5.4 1.8v2.6M10.6 1.8v2.6"/></svg>',
+  sparkle:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.8 9.5 6 13.7 7.5 9.5 9 8 13.2 6.5 9 2.3 7.5 6.5 6z"/><path d="M13 1.6v2M12 2.6h2"/></svg>',
+  user:   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="5.4" r="2.8"/><path d="M2.8 13.6a5.2 5.2 0 0 1 10.4 0"/></svg>',
+  file:   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 1.8H4.4A1.6 1.6 0 0 0 2.8 3.4v9.2a1.6 1.6 0 0 0 1.6 1.6h7.2a1.6 1.6 0 0 0 1.6-1.6V5.8z"/><path d="M9 1.8v4h4.2"/></svg>',
+  gavel:  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.4 13.6h7M3.6 7.2l3.6-3.6M5.1 5.7 8.7 2.1M8.4 10.5 12 6.9M9.9 12 13.5 8.4M6 4.2l5.8 5.8"/></svg>',
+  inbox:  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.8 9.2h3.4l1 1.8h3.6l1-1.8h3.4"/><path d="M3.6 2.6h8.8l1.8 6.6v3.2a1.6 1.6 0 0 1-1.6 1.6H3.4a1.6 1.6 0 0 1-1.6-1.6V9.2z"/></svg>',
+  logout: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14H3.4a1.4 1.4 0 0 1-1.4-1.4V3.4A1.4 1.4 0 0 1 3.4 2H6"/><path d="m10.4 11.2 3.2-3.2-3.2-3.2M13.6 8H6"/></svg>',
+  half:   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="6.4"/><path d="M8 1.6a6.4 6.4 0 0 1 0 12.8z" fill="currentColor" stroke="none"/></svg>',
+  target: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="6.2"/><circle cx="8" cy="8" r="2.4"/></svg>',
+  mail:   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1.8" y="3.4" width="12.4" height="9.2" rx="1.6"/><path d="m2.4 4.6 5.6 4 5.6-4"/></svg>',
+  refresh:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8a6 6 0 1 1-1.8-4.3"/><path d="M14 2v3.6h-3.6"/></svg>',
+  close:  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="m4 4 8 8M12 4l-8 8"/></svg>',
+  sun:    '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="8" cy="8" r="3"/><path d="M8 1.4v1.6M8 13v1.6M1.4 8H3M13 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M12.6 3.4l-1.1 1.1M4.5 11.5l-1.1 1.1"/></svg>',
+  moon:   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.6 9.4A5.8 5.8 0 0 1 6.6 2.4a5.8 5.8 0 1 0 7 7z"/></svg>',
+};
+const icon = (name, size) =>
+  I[name].replace("<svg", `<svg width="${size || 14}" height="${size || 14}"`);
+
+/* ── Status vocabulary ────────────────────────────────────────────────
+   Pipeline states, not severities: only the two that really are a severity
+   borrow the reserved status colours. Each pill carries a glyph and a label,
+   so colour is never the only channel. */
+const STATUS = {
+  RECEIVED:         { label: "Awaiting screening",   tone: "neutral", glyph: "clock",
+                      short: "Awaiting screening",   hint: "the bot has not scored these yet" },
+  ACCEPTED:         { label: "Invited",              tone: "accent",  glyph: "send",
+                      short: "Invited",              hint: "waiting on the candidate's slots" },
+  SCHEDULED:        { label: "Slots received",       tone: "good",    glyph: "calendar",
+                      short: "Slots received",       hint: "ready for you to confirm a time" },
+  REJECTED:         { label: "Rejected",             tone: "crit",    glyph: "x",
+                      short: "Rejected",             hint: "closed, candidate was told" },
+  SCREENING_FAILED: { label: "Needs attention",      tone: "warn",    glyph: "alert",
+                      short: "Needs attention",      hint: "screening failed, decide by hand" },
+};
+const ORDER = ["RECEIVED", "ACCEPTED", "SCHEDULED", "REJECTED", "SCREENING_FAILED"];
+const TONE_VAR = { good: "var(--good)", warn: "var(--warn)", crit: "var(--crit)",
+                   accent: "var(--accent)", neutral: "var(--faint)" };
+
+function pill(status) {
+  const s = STATUS[status];
+  if (!s) return `<span class="pill s-neutral">${esc(status || "—")}</span>`;
+  return `<span class="pill s-${s.tone}">${icon(s.glyph, 12)}${esc(s.label)}</span>`;
+}
+
+function meter(score, threshold, compact) {
+  if (score == null) {
+    return `<div class="meter blank"><div class="meter-track"></div><span class="meter-value">—</span></div>`;
+  }
+  const pass = score >= threshold;
+  const label = `Match score ${score} out of 100, threshold ${threshold}, ` +
+                (pass ? "above" : "below");
+  return `<div class="meter ${pass ? "pass" : "fail"}" role="img" aria-label="${esc(label)}">
+            <div class="meter-track">
+              <div class="meter-fill" style="width:${Math.max(score, 1)}%"></div>
+              <div class="meter-limit" style="left:${threshold}%"></div>
+            </div>
+            ${compact ? "" : `<span class="meter-value">${score}</span>`}
+          </div>`;
+}
+
+function confidenceBadge(level) {
+  const bars = { low: 1, medium: 2, high: 3 }[level] || 0;
+  return `<span class="conf" title="How readable and evidenced the CV is">${
+    [1, 2, 3].map((n) => `<i class="${n <= bars ? "on" : ""}"></i>`).join("")
+  }${esc(level)} confidence</span>`;
+}
+
+function fmtYears(years) {
+  const n = Number(years);
+  if (!isFinite(n) || n <= 0) return "not datable";
+  return n === 1 ? "1 year" : `${n % 1 ? n.toFixed(1) : n} years`;
+}
+
+const initials = (name) => String(name || "?").trim().split(/\s+/)
+  .slice(0, 2).map((w) => w[0] || "").join("").toUpperCase() || "?";
+
+function fmtAbs(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return isNaN(d) ? "—" : d.toLocaleString(undefined,
+    { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+function fmtRel(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d)) return "—";
+  const mins = Math.round((Date.now() - d.getTime()) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return mins + "m ago";
+  if (mins < 1440) return Math.round(mins / 60) + "h ago";
+  const days = Math.round(mins / 1440);
+  return days < 7 ? days + "d ago" : d.toLocaleDateString(undefined, { day: "2-digit", month: "short" });
+}
+
+/* ── State ────────────────────────────────────────────────────────────── */
+let threshold = 80;
+let statusFilter = "ALL";
+let selected = null;
+let rows = [];
+// Applications this browser has just queued, so the drawer can show progress.
+const running = new Set();
+let counts = {};
+
+/* ── Theme ────────────────────────────────────────────────────────────── */
+function prefersDark() {
+  return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+function isDark() {
+  const set = document.documentElement.getAttribute("data-theme");
+  return set ? set === "dark" : prefersDark();
+}
+function paintThemeButton() {
+  $("theme").innerHTML = icon(isDark() ? "sun" : "moon", 15);
+}
+$("theme").addEventListener("click", () => {
+  const next = isDark() ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  try { localStorage.setItem("rp-theme", next); } catch { /* private window */ }
+  paintThemeButton();
+});
+try {
+  const saved = localStorage.getItem("rp-theme");
+  if (saved) document.documentElement.setAttribute("data-theme", saved);
+} catch { /* private window: follow the OS */ }
+paintThemeButton();
+
+/* ── Toasts ───────────────────────────────────────────────────────────── */
+function toast(kind, title, detail) {
+  const el = document.createElement("div");
+  el.className = "toast " + kind;
+  el.innerHTML = `${icon(kind === "ok" ? "circleCheck" : "alert", 15)}
+    <div class="msg"><b>${esc(title)}</b>${detail ? `<span>${esc(detail)}</span>` : ""}</div>`;
+  $("toasts").appendChild(el);
+  setTimeout(() => el.remove(), 5200);
+}
+
+/* ── API ──────────────────────────────────────────────────────────────── */
+async function api(path, options) {
+  const res = await fetch(path, options);
+  if (res.status === 401) { showLogin(); throw new Error("unauthorised"); }
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw Object.assign(new Error(body.error || res.status), { body });
+  return body;
+}
+
+/* ── Session ──────────────────────────────────────────────────────────── */
+function showLogin() {
+  closeDrawer();
+  $("view-app").hidden = true;
+  $("view-login").hidden = false;
+  setTimeout(() => $("u").focus(), 40);
+}
+
+function showApp(user) {
+  $("view-login").hidden = true;
+  $("view-app").hidden = false;
+  $("meName").textContent = user;
+  $("meAvatar").textContent = initials(user);
+  $("logout").innerHTML = icon("logout", 15);
+  load();
+}
+
+$("loginForm").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const err = $("loginError");
+  err.innerHTML = "";
+  $("login").disabled = true;
+  try {
+    const body = await api("/api/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: $("u").value.trim(), password: $("p").value }),
+    });
+    $("p").value = "";
+    showApp(body.user);
+  } catch (e) {
+    const code = e.body && e.body.error;
+    err.innerHTML = icon("alert", 14) + "<span>" + esc(
+      code === "too_many_attempts"
+        ? "Too many failed attempts. Try again in a few minutes."
+        : code === "portal_disabled"
+          ? "No credentials are configured for this portal. Contact your administrator."
+          : "Incorrect username or password.") + "</span>";
+  } finally {
+    $("login").disabled = false;
+  }
+});
+
+$("logout").addEventListener("click", async () => {
+  await fetch("/api/admin/logout", { method: "POST" });
+  showLogin();
+});
+
+/* ── Navigation & filters ─────────────────────────────────────────────── */
+function renderNav() {
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  const item = (value, label, n, dot) => `
+    <button class="nav-item" data-status="${value}" aria-current="${statusFilter === value}">
+      ${dot ? `<span class="dot-s" style="background:${dot}"></span>`
+            : `<span style="color:var(--muted);display:flex">${icon("inbox", 14)}</span>`}
+      <span>${esc(label)}</span>
+      <span class="n">${n}</span>
+    </button>`;
+
+  $("nav").innerHTML =
+    `<div class="eyebrow nav-label">Pipeline</div>` +
+    item("ALL", "All applications", total, null) +
+    ORDER.filter((s) => s !== "SCREENING_FAILED" || counts[s])
+         .map((s) => item(s, STATUS[s].short, counts[s] || 0, TONE_VAR[STATUS[s].tone]))
+         .join("");
+
+  for (const b of $("nav").querySelectorAll(".nav-item")) {
+    b.addEventListener("click", () => setFilter(b.dataset.status));
+  }
+}
+
+function setFilter(value) {
+  statusFilter = value;
+  $("pageTitle").textContent = value === "ALL" ? "Applications" : STATUS[value].short;
+  load();
+}
+
+/* ── List ─────────────────────────────────────────────────────────────── */
+let searchTimer;
+$("q").addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(load, 220);
+});
+$("refresh").addEventListener("click", () => load());
+
+function skeleton() {
+  $("rows").innerHTML = Array.from({ length: 5 }, () => `
+    <tr><td><div class="cell-cand"><div class="skel" style="width:28px;height:28px;border-radius:50%"></div>
+      <div style="flex:1"><div class="skel" style="width:48%"></div>
+      <div class="skel" style="width:66%;margin-top:6px;height:9px"></div></div></div></td>
+    <td><div class="skel" style="width:70%"></div></td>
+    <td><div class="skel" style="width:60%"></div></td>
+    <td><div class="skel" style="width:74%;height:18px;border-radius:999px"></div></td>
+    <td><div class="skel" style="width:70%"></div></td></tr>`).join("");
+  $("tableState").innerHTML = "";
+}
+
+async function load() {
+  skeleton();
+  const url = `/api/admin/applications?status=${encodeURIComponent(statusFilter)}` +
+              `&q=${encodeURIComponent($("q").value.trim())}`;
+  let data;
+  try { data = await api(url); } catch { return; }
+
+  threshold = data.threshold;
+  rows = data.applications;
+  counts = data.counts || {};
+  renderNav();
+  $("count").textContent = rows.length === 1
+    ? "1 application" : `${rows.length} applications`;
+
+  if (!rows.length) {
+    $("rows").innerHTML = "";
+    const searching = $("q").value.trim() || statusFilter !== "ALL";
+    $("tableState").innerHTML = `
+      <div class="empty">
+        <div class="ico">${icon("inbox", 19)}</div>
+        <h3>${searching ? "Nothing matches this view" : "No applications yet"}</h3>
+        <p>${searching ? "Try another status, or clear the search."
+                       : "They will appear here the moment someone applies."}</p>
+      </div>`;
+    return;
+  }
+  $("tableState").innerHTML = "";
+
+  $("rows").innerHTML = rows.map((a) => `
+    <tr data-id="${a.id}" tabindex="0" aria-selected="${selected === a.id}">
+      <td>
+        <div class="cell-cand">
+          <span class="avatar">${esc(initials(a.name))}</span>
+          <span style="min-width:0">
+            <span class="nm" style="display:block">${esc(a.name)}</span>
+            <span class="em" style="display:block">${esc(a.email)}</span>
+          </span>
+        </div>
+      </td>
+      <td class="t-sub">${esc(a.position || "—")}</td>
+      <td>${meter(a.matchScore, threshold)}</td>
+      <td>${pill(a.status)}${a.overridden
+            ? `<span class="flag">${icon("gavel", 11)}HR override</span>` : ""}</td>
+      <td class="t-sub nowrap" title="${esc(fmtAbs(a.submittedAt))}">${esc(fmtRel(a.submittedAt))}</td>
+    </tr>`).join("");
+
+  for (const tr of $("rows").querySelectorAll("tr")) {
+    const open = () => openDetail(Number(tr.dataset.id));
+    tr.addEventListener("click", open);
+    tr.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); }
+    });
+  }
+}
+
+/* ── Drawer ───────────────────────────────────────────────────────────── */
+function closeDrawer() {
+  selected = null;
+  $("drawer").classList.remove("on");
+  $("scrim").classList.remove("on");
+  setTimeout(() => { $("drawer").hidden = true; }, 200);
+  for (const tr of $("rows").querySelectorAll("tr")) tr.setAttribute("aria-selected", "false");
+}
+$("scrim").addEventListener("click", closeDrawer);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && selected != null) closeDrawer();
+  if (e.key === "/" && !/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)) {
+    e.preventDefault(); $("q").focus();
+  }
+});
+
+async function openDetail(id) {
+  selected = id;
+  for (const tr of $("rows").querySelectorAll("tr")) {
+    tr.setAttribute("aria-selected", String(Number(tr.dataset.id) === id));
+  }
+  $("drawer").hidden = false;
+  $("scrim").classList.add("on");
+  requestAnimationFrame(() => $("drawer").classList.add("on"));
+
+  let a;
+  try { a = await api(`/api/admin/applications/${id}`); }
+  catch { closeDrawer(); return; }
+  if (selected !== id) return;   // the user moved on while this was in flight
+
+  const scored = a.matchScore != null;
+  const d = a.details || {};
+  const awaitingSlots = !a.availability.length && (a.status === "ACCEPTED");
+
+  $("drawer").innerHTML = `
+    <div class="drawer-head">
+      <span class="avatar lg">${esc(initials(a.name))}</span>
+      <div class="who">
+        <h2>${esc(a.name)}</h2>
+        <div class="t-sub">${esc(a.position || "—")} · ref. ${a.id}</div>
+        <div style="margin-top:9px">${pill(a.status)}${a.overridden
+          ? `<span class="flag">${icon("gavel", 11)}HR override</span>` : ""}</div>
+      </div>
+      <button class="btn btn-icon" id="close" aria-label="Close">${icon("close", 15)}</button>
+    </div>
+
+    <div class="drawer-body">
+      <section class="sect">
+        <div class="sect-head">${icon("sparkle", 13)}<span class="eyebrow">AI screening</span>
+          ${d.confidence ? confidenceBadge(d.confidence) : ""}</div>
+
+        ${a.status === "RECEIVED" && running.has(a.id) ? `
+          <div class="working">${icon("refresh", 14).replace("<svg", '<svg class="spin"')}
+            Analysing the CV… this usually takes 10 to 20 seconds.</div>` : ""}
+
+        ${d.integrity && d.integrity.injection_attempt ? `
+          <div class="banner">${icon("alert", 15)}<div>
+            <b>The CV tried to instruct the model.</b>
+            It was scored on its factual content only.
+            ${d.integrity.note ? `<q>${esc(d.integrity.note)}</q>` : ""}
+          </div></div>` : ""}
+
+        <div class="verdict">
+          <div class="fig">${scored ? a.matchScore : "—"}</div>
+          <div class="side">
+            ${meter(a.matchScore, threshold, true)}
+            <div class="cap">out of 100 · threshold ${threshold} ·
+              bot verdict <b style="color:var(--ink)">${esc(
+                a.aiStatus ? STATUS[a.aiStatus].label : "not screened yet")}</b></div>
+          </div>
+        </div>
+        ${a.summary ? `<p class="prose">${esc(a.summary)}</p>` : ""}
+
+        ${d.experience ? `
+          <div class="facts">
+            <div class="f"><div class="k">Relevant experience</div>
+              <div class="v">${esc(fmtYears(d.experience.relevant_years))}</div></div>
+            <div class="f"><div class="k">Seniority</div>
+              <div class="v" style="text-transform:capitalize">${
+                esc(d.experience.seniority || "unclear")}</div></div>
+          </div>
+          ${(d.experience.key_technologies || []).length ? `<div class="chips">${
+            d.experience.key_technologies.map((t) =>
+              `<span class="chip">${esc(t)}</span>`).join("")}</div>` : ""}` : ""}
+
+        ${(d.requirement_review || []).length ? `
+          <div class="eyebrow" style="margin-top:20px">Requirement by requirement</div>
+          <ul class="review">${d.requirement_review.map((r) => `
+            <li class="${esc(r.status)}">
+              <div class="top">
+                ${icon(r.status === "met" ? "circleCheck"
+                     : r.status === "partial" ? "half" : "x", 14)}
+                <span class="req">${esc(r.requirement)}</span>
+                ${r.mandatory ? '<span class="must">must have</span>' : ""}
+              </div>
+              ${r.evidence ? `<div class="ev">${esc(r.evidence)}</div>` : ""}
+            </li>`).join("")}</ul>` : ""}
+
+        ${(d.interview_focus || []).length ? `
+          <div class="eyebrow" style="margin-top:20px">What to probe on the call</div>
+          <ul class="probe">${d.interview_focus.map((q) =>
+            `<li><span>${esc(q)}</span></li>`).join("")}</ul>` : ""}
+
+        ${a.strengths.length ? `
+          <div class="eyebrow" style="margin-top:20px">Strengths the model kept</div>
+          <ul class="findings pos">${a.strengths.map((s) =>
+            `<li>${icon("check", 13)}<span>${esc(s)}</span></li>`).join("")}</ul>` : ""}
+
+        <div class="eyebrow" style="margin-top:20px">What the candidate is told</div>
+        <div class="told">
+          ${a.gaps.length ? `
+            <p class="cap">${icon("mail", 12)} In a <b>rejection</b>, these lines are
+              quoted as areas to strengthen. Nothing else from this panel is — no score,
+              no threshold, no strengths.</p>
+            <ul class="findings neg">${a.gaps.map((s) =>
+              `<li>${icon("minus", 13)}<span>${esc(s)}</span></li>`).join("")}</ul>
+            <p class="cap" style="margin:10px 0 0">An <b>invitation</b> quotes nothing at
+              all: it only says we are moving forward, and carries the scheduling
+              link.</p>`
+          : `<p class="cap" style="margin:0">${icon("mail", 12)} Nothing from this panel
+              has been written to the candidate. An invitation quotes no assessment; a
+              rejection would quote the gaps above once the model has produced
+              them.</p>`}
+        </div>
+
+        <div class="audit">
+          <span>Model <b>${esc(a.aiModel || "—")}</b></span>
+          <span>Screened <b>${esc(fmtAbs(a.screenedAt))}</b></span>
+          <span>${a.decidedBy
+            ? `Reviewed by <b>${esc(a.decidedBy)}</b> on <b>${esc(fmtAbs(a.decidedAt))}</b>`
+            : "No human review recorded yet"}</span>
+        </div>
+
+        <div class="rerun">
+          <button class="btn btn-quiet" id="rerun">
+            ${icon("refresh", 14)}${scored ? "Re-run the analysis" : "Run the analysis"}
+          </button>
+          <label class="check" style="margin:0">
+            <input type="checkbox" id="rerunNotify" ${
+              a.decidedBy || a.status === "SCHEDULED" ? "" : "checked"} />
+            <span>email the outcome</span>
+          </label>
+          <span class="note">Costs one Gemini request.</span>
+        </div>
+      </section>
+
+      <section class="sect">
+        <div class="sect-head">${icon("user", 13)}<span class="eyebrow">Candidate</span></div>
+        <dl class="kv">
+          <dt>Email</dt><dd><a href="mailto:${esc(a.email)}">${esc(a.email)}</a></dd>
+          <dt>Phone</dt><dd>${esc(a.phone || "not provided")}</dd>
+          <dt>Applied</dt><dd>${esc(fmtAbs(a.submittedAt))}</dd>
+        </dl>
+        ${a.hasResume ? `<a class="btn btn-quiet" style="margin-top:13px"
+            href="/api/admin/applications/${a.id}/resume"
+            target="_blank" rel="noopener">${icon("file", 14)}Open the CV</a>` : ""}
+      </section>
+
+      <section class="sect">
+        <div class="sect-head">${icon("calendar", 13)}<span class="eyebrow">Screening call</span></div>
+        ${a.availability.length ? `
+          <ul class="slots">${a.availability.map((s) =>
+            `<li>${icon("clock", 13)}<span>${esc(s)}</span></li>`).join("")}</ul>
+          <div class="audit">
+            <span>Time zone <b>${esc(a.availabilityTz || "—")}</b></span>
+            <span>Sent <b>${esc(fmtAbs(a.availabilityAt))}</b></span>
+          </div>
+          ${a.availabilityNote ? `<p class="prose" style="margin-top:10px">
+            <span class="eyebrow">Candidate note</span><br>${esc(a.availabilityNote)}</p>` : ""}
+        ` : `<div class="callout">${awaitingSlots
+              ? "Invitation sent. The candidate has not filled in the scheduling page yet."
+              : "Nothing scheduled: this candidate has not been invited to a call."}</div>`}
+      </section>
+
+      <section class="sect">
+        <div class="sect-head">${icon("gavel", 13)}<span class="eyebrow">Your decision</span></div>
+        <p class="t-sub" style="margin:0 0 12px">
+          Confirm the bot or overturn it. The candidate is emailed either an
+          invitation to pick a slot, or a rejection — never the score.</p>
+        <label class="field" style="margin:0">
+          <span style="display:block;font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:6px">Internal notes</span>
+          <textarea class="input" id="notes" maxlength="2000"
+            placeholder="Why you agree or disagree with the assessment…">${esc(a.hrNotes || "")}</textarea>
+        </label>
+        <label class="switch">
+          <input type="checkbox" id="notify" checked />
+          <span>Email the candidate this outcome
+            <span class="hint">Leave unticked to record the decision silently.</span></span>
+        </label>
+        <div class="decide-row">
+          <button class="btn btn-primary" data-decide="ACCEPTED">${icon("send", 14)}Invite to call</button>
+          <button class="btn btn-danger" data-decide="REJECTED">${icon("x", 14)}Reject</button>
+        </div>
+        <div class="form-error" id="decideError"></div>
+      </section>
+    </div>`;
+
+  $("close").addEventListener("click", closeDrawer);
+
+  for (const btn of $("drawer").querySelectorAll("[data-decide]")) {
+    btn.addEventListener("click", () => decide(a.id, btn.dataset.decide));
+  }
+
+  const rerun = $("rerun");
+  if (rerun) rerun.addEventListener("click", () => rescreen(a.id, a.screenedAt));
+}
+
+/* Re-run the AI screening. The usual reason is that the Gemini free tier ran
+   out mid-day and the application never left "Awaiting screening". */
+async function rescreen(id, previousScreenedAt) {
+  const notify = $("rerunNotify").checked;
+  if (!confirm(
+      "Re-run the AI analysis on this CV?\n\n" +
+      "It spends one Gemini request" +
+      (notify ? ", and the candidate will be emailed the outcome."
+              : ". The candidate will NOT be emailed."))) return;
+
+  $("rerun").disabled = true;
+  try {
+    await api(`/api/admin/applications/${id}/rescreen`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notify }),
+    });
+  } catch (err) {
+    const code = err.body && err.body.error;
+    toast("bad",
+      code === "already_running" ? "That analysis is already running"
+      : code === "unknown_position" ? "That role no longer exists"
+      : code === "no_resume" ? "No CV is attached to this application"
+      : "The analysis could not be queued");
+    $("rerun").disabled = false;
+    return;
+  }
+
+  running.add(id);
+  toast("ok", "Analysis queued", notify
+    ? "The candidate will be emailed the outcome."
+    : "The candidate will not be emailed.");
+  await load();
+  await openDetail(id);
+  watch(id, previousScreenedAt);
+}
+
+/* Poll until the screener has written a new result, or until it is clearly
+   not coming. Screening runs off the request thread, so there is nothing to
+   await server-side. */
+async function watch(id, previousScreenedAt) {
+  const deadline = Date.now() + 120000;
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 3000));
+    if (selected !== id) break;          // the user moved on
+    let a;
+    try { a = await api(`/api/admin/applications/${id}`); } catch { break; }
+    if (a.screenedAt !== previousScreenedAt || a.status !== "RECEIVED") {
+      running.delete(id);
+      await load();
+      if (selected === id) await openDetail(id);
+      toast(a.matchScore == null ? "bad" : "ok",
+        a.matchScore == null ? "The analysis did not produce a score"
+                             : `Scored ${a.matchScore} out of 100`,
+        a.matchScore == null
+          ? "Check the server log: the Gemini daily quota is the usual cause."
+          : `Bot verdict: ${STATUS[a.aiStatus] ? STATUS[a.aiStatus].label : a.aiStatus}.`);
+      return;
+    }
+  }
+  running.delete(id);
+  if (selected === id) await openDetail(id);
+}
+
+async function decide(id, decision) {
+  const notify = $("notify").checked;
+  const notes = $("notes").value.trim();
+  const verb = decision === "ACCEPTED"
+    ? "invite this candidate to a screening call"
+    : "reject this candidate";
+  if (!confirm(`Confirm: ${verb}${notify ? " and email them now" : " without emailing them"}?`)) return;
+
+  const buttons = [...$("drawer").querySelectorAll("[data-decide]")];
+  buttons.forEach((b) => (b.disabled = true));
+  try {
+    await api(`/api/admin/applications/${id}/decision`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ decision, notes, notify }),
+    });
+    await load();
+    await openDetail(id);
+    toast("ok",
+      decision === "ACCEPTED" ? "Invited to a screening call" : "Application rejected",
+      notify ? "The candidate has been emailed." : "Recorded without emailing the candidate.");
+  } catch {
+    buttons.forEach((b) => (b.disabled = false));
+    const err = $("decideError");
+    if (err) {
+      err.innerHTML = icon("alert", 14) +
+        "<span>The decision could not be recorded. Please try again.</span>";
+    }
+  }
+}
+
+/* ── Boot ─────────────────────────────────────────────────────────────── */
+(async () => {
+  try {
+    const s = await fetch("/api/admin/session").then((r) => r.json());
+    threshold = s.threshold || threshold;
+    if (s.user) showApp(s.user); else showLogin();
+  } catch { showLogin(); }
+})();
+</script>
+</body>
+</html>

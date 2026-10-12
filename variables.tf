@@ -1,16 +1,4 @@
-###############################################################################
-#  SECTION 1 — WHAT YOU MUST PROVIDE                                          #
-#                                                                             #
-#  Four values. The variables below have NO default, so Terraform asks for     #
-#  them at launch — that is a prompt, not an error.                           #
-#                                                                             #
-#  To stop being asked:  cp terraform.tfvars.example terraform.tfvars         #
-#  Everything in Section 2 already works as-is.                               #
-###############################################################################
 
-# Requires, BEFORE the first apply: you own this domain, a Route 53 hosted zone
-# exists for it in THIS account, and the registrar points at that zone.
-# Check with: aws route53 list-hosted-zones-by-name --dns-name example.com
 variable "root_domain" {
   description = "Your domain, e.g. example.com. A Route 53 zone must already exist for it in this account."
   type        = string
@@ -71,6 +59,107 @@ variable "gemini_api_key" {
 }
 
 
+# ─── Email ───────────────────────────────────────────────────────────────────
+# Empty: the stack sends through SES, which starts in a sandbox and can only
+# write to addresses you verified one by one.
+# Set: Resend sends instead, to anyone, as soon as the domain below is
+# verified. SES stays configured and is used as the fallback if Resend
+# refuses a message, so a bad key degrades rather than loses the email.
+#
+# Free key: https://resend.com/api-keys  (it also passes through
+# terraform.tfstate in clear, which .gitignore already excludes)
+# ─── Free Tier ───────────────────────────────────────────────────────────────
+# Two knobs, because the default architecture costs real money whatever you do
+# with the instances. Set BOTH for a student account:
+#
+#   enable_nat_gateway = false
+#   instance_count     = 1
+#
+# What that saves, per month, at us-east-1 on-demand prices:
+#
+#   NAT Gateway   ~32 $   billed per hour even with zero traffic, never free
+#   2nd instance  ~7.50 $ and it is what pushes EC2 past the 750 free hours
+#
+# What it costs you in return is explained on each variable.
+
+# The NAT Gateway is the single largest line on this stack's bill. It exists so
+# the servers can sit in PRIVATE subnets and still reach dnf, S3, Secrets
+# Manager and the Gemini API.
+#
+# false moves the servers into the public subnets with a public IP, and the NAT
+# Gateway is not created at all. They stay unreachable from the internet: the
+# EC2 security group only accepts port 80 from the load balancer, and there is
+# no SSH rule — administration goes through SSM either way.
+#
+# You lose the private-subnet posture, which is a real production practice and
+# one of the things this project is built to show. Keep it true if you can
+# afford ~1 $/day; turn it false for a student account.
+variable "enable_nat_gateway" {
+  description = "Private subnets + NAT (~32 $/month). false = public subnets, no NAT."
+  type        = bool
+  default     = true
+}
+
+
+# The Free Tier covers 750 instance-hours a month: one t3.micro running
+# non-stop, not two. Two instances is what the load balancer is FOR - it is the
+# point of the ALB lesson - but one instance still routes through the ALB and
+# still demonstrates health checks and HTTPS termination.
+variable "instance_count" {
+  description = "Web servers behind the load balancer. 1 fits the Free Tier."
+  type        = number
+  default     = 2
+
+  validation {
+    condition     = var.instance_count == 1 || var.instance_count == 2
+    error_message = "instance_count is 1 (Free Tier) or 2 (two availability zones)."
+  }
+}
+
+
+variable "resend_api_key" {
+  description = "Resend API key. Empty = send through SES only."
+  type        = string
+  sensitive   = true
+  default     = ""
+
+  validation {
+    condition     = var.resend_api_key == "" || startswith(var.resend_api_key, "re_")
+    error_message = "A Resend API key starts with \"re_\". Copy it from https://resend.com/api-keys"
+  }
+}
+
+
+# The records Resend prints when you add your domain in its dashboard.
+# Paste them here and apply: Route 53 already holds the zone, so there is
+# nothing to do at your registrar.
+#
+#   resend_dns_records = {
+#     dkim = { name = "resend._domainkey", type = "TXT", value = "p=MIGfMA0G..." }
+#     spf  = { name = "send",              type = "TXT", value = "v=spf1 include:amazonses.com ~all" }
+#     mx   = { name = "send",              type = "MX",  value = "10 feedback-smtp.us-east-1.amazonses.com" }
+#   }
+#
+# Names are relative to root_domain. Leave empty while you are still on SES.
+variable "resend_dns_records" {
+  description = "Domain verification records from the Resend dashboard."
+  type = map(object({
+    name  = string
+    type  = string
+    value = string
+  }))
+  default = {}
+
+  validation {
+    condition = alltrue([
+      for r in values(var.resend_dns_records) :
+      contains(["TXT", "MX", "CNAME"], upper(r.type))
+    ])
+    error_message = "Resend records are TXT, MX or CNAME."
+  }
+}
+
+
 variable "aws_region" {
   description = "AWS region to deploy into."
   type        = string
@@ -91,12 +180,23 @@ variable "match_threshold" {
 }
 
 
-# Set: the acceptance email carries a "Book my interview" button.
-# Empty: the email asks the candidate for their availability instead.
-variable "interview_booking_url" {
-  description = "Scheduling link. Empty = ask the candidate for availability."
-  type        = string
-  default     = ""
+# Logins for the internal HR portal at /admin, where the match score, the AI
+# reasoning and the override controls live. Empty: Terraform generates a single
+# "hr" account and prints the password with
+#   terraform output -raw hr_portal_password
+# Scheduling is handled in-app, so no external booking tool is configured here:
+# an accepted candidate receives a private link on which they enter their own
+# availability.
+variable "hr_portal_users" {
+  description = "HR portal logins, username => password. Empty = generated."
+  type        = map(string)
+  sensitive   = true
+  default     = {}
+
+  validation {
+    condition     = alltrue([for pw in values(var.hr_portal_users) : length(pw) >= 12])
+    error_message = "Each HR portal password must be at least 12 characters."
+  }
 }
 
 
@@ -242,10 +342,21 @@ variable "gemini_model" {
 }
 
 # The newest models occasionally answer 503 "high demand".
+# This MUST be a different model, not an alias of the primary one.
+# The free tier meters 20 requests a day PER MODEL, and "gemini-flash-latest"
+# resolves to the same model as the default primary - so it shares the same
+# exhausted allowance and protects against nothing. Measured, not assumed:
+# with gemini-3.8-flash at 429, gemini-flash-latest also answered 429 while
+# gemini-3.5-flash answered 200.
 variable "gemini_fallback_model" {
-  description = "Model used when the primary one is overloaded. Empty = no fallback."
+  description = "Different model used when the primary is overloaded or out of quota."
   type        = string
-  default     = "gemini-flash-latest"
+  default     = "gemini-3.5-flash"
+
+  validation {
+    condition     = var.gemini_fallback_model != var.gemini_model
+    error_message = "The fallback must differ from gemini_model, or it shares its daily quota."
+  }
 }
 
 variable "sender_display_name" {

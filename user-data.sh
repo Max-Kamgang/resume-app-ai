@@ -39,8 +39,14 @@ APP=/opt/rp-app/app.py
 BEFORE=$(sha256sum "$APP" 2>/dev/null | cut -d' ' -f1)
 
 aws s3 cp "s3://$BUCKET/app/app.py" "$APP.new" --quiet && mv "$APP.new" "$APP"
-aws s3 cp "s3://$BUCKET/index.html" /usr/share/nginx/html/index.html.new --quiet \
-  && mv /usr/share/nginx/html/index.html.new /usr/share/nginx/html/index.html
+
+# index.html (careers form), admin.html (HR portal), schedule.html (candidate
+# availability). Each lands through a temp file so nginx never serves a half
+# written page.
+for PAGE in index.html admin.html schedule.html; do
+  aws s3 cp "s3://$BUCKET/$PAGE" "/usr/share/nginx/html/$PAGE.new" --quiet \
+    && mv "/usr/share/nginx/html/$PAGE.new" "/usr/share/nginx/html/$PAGE"
+done
 
 AFTER=$(sha256sum "$APP" 2>/dev/null | cut -d' ' -f1)
 if [ -n "$AFTER" ] && [ "$BEFORE" != "$AFTER" ]; then
@@ -61,6 +67,9 @@ mkdir -p /usr/share/nginx/html
 umask 077
 cat > /opt/rp-app/.env <<ENVFILE
 GEMINI_API_KEY=${gemini_api_key}
+RESEND_API_KEY=${resend_api_key}
+HR_PORTAL_USERS_B64=${hr_portal_users_b64}
+SESSION_SECRET=${session_secret}
 ENVFILE
 chmod 600 /opt/rp-app/.env
 umask 022
@@ -76,23 +85,28 @@ Wants=network-online.target
 
 [Service]
 WorkingDirectory=/opt/rp-app
-Environment=RESUME_BUCKET=${resume_bucket}
-Environment=ASSETS_BUCKET=${assets_bucket}
-Environment=JOBS_KEY=${jobs_key}
-Environment=DB_SECRET_NAME=${db_secret_name}
-Environment=SENDER_EMAIL=${sender_email}
-Environment=SENDER_NAME=${sender_name}
-Environment=HR_EMAIL=${hr_email}
-Environment=COMPANY_NAME=${company_name}
-Environment=SES_CONFIG_SET=${ses_config_set}
-Environment=GEMINI_MODEL=${gemini_model}
-Environment=GEMINI_FALLBACK_MODEL=${gemini_fallback_model}
+Environment="RESUME_BUCKET=${resume_bucket}"
+Environment="ASSETS_BUCKET=${assets_bucket}"
+Environment="JOBS_KEY=${jobs_key}"
+Environment="DB_SECRET_NAME=${db_secret_name}"
+Environment="SENDER_EMAIL=${sender_email}"
+Environment="SENDER_NAME=${sender_name}"
+Environment="HR_EMAIL=${hr_email}"
+Environment="COMPANY_NAME=${company_name}"
+Environment="SES_CONFIG_SET=${ses_config_set}"
+Environment="GEMINI_MODEL=${gemini_model}"
+Environment="GEMINI_FALLBACK_MODEL=${gemini_fallback_model}"
+# Quoted: Environment= takes a SPACE-SEPARATED list of assignments, so an
+# unquoted "Utrains HR" would be read as SENDER_NAME=Utrains plus a stray
+# token, and the sender name would silently lose half of itself.
 # The API key lives in a separate file, read by systemd at startup.
 EnvironmentFile=/opt/rp-app/.env
-Environment=MATCH_THRESHOLD=${match_threshold}
-Environment=INTERVIEW_BOOKING_URL=${booking_url}
-Environment=AWS_REGION=${aws_region}
-Environment=AWS_DEFAULT_REGION=${aws_region}
+Environment="MATCH_THRESHOLD=${match_threshold}"
+# Public address of the portal: the scheduling link emailed to the candidate
+# is built off it, and a relative link means nothing inside a mail client.
+Environment="APP_BASE_URL=${app_base_url}"
+Environment="AWS_REGION=${aws_region}"
+Environment="AWS_DEFAULT_REGION=${aws_region}"
 ExecStart=/usr/local/bin/gunicorn --workers 2 --threads 8 --timeout 180 --bind 127.0.0.1:5000 --access-logfile - --error-logfile - app:app
 Restart=always
 RestartSec=5
@@ -145,7 +159,23 @@ server {
         try_files /index.html =404;
     }
 
-    location ~ ^/(submit|jobs|health|application/) {
+    # Internal HR portal. The page itself is a static shell; every byte of
+    # data it shows comes from /api/admin/, which requires a session.
+    location ~ ^/admin/?$ {
+        add_header Cache-Control "no-cache";
+        add_header X-Robots-Tag "noindex, nofollow";
+        try_files /admin.html =404;
+    }
+
+    # Candidate scheduling page, opened from the invitation email with a
+    # per-application token in the query string.
+    location ~ ^/schedule/?$ {
+        add_header Cache-Control "no-cache";
+        add_header X-Robots-Tag "noindex, nofollow";
+        try_files /schedule.html =404;
+    }
+
+    location ~ ^/(submit|jobs|health|api/) {
         proxy_pass http://127.0.0.1:5000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;

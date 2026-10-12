@@ -16,12 +16,12 @@
       --muted:   #6E6E78;
       --line:    #E3E1DB;
       --line-2:  #D3D0C8;
-      --accent:  #15524A;
-      --accent-h:#0E3D37;
-      --accent-soft: #EDF3F1;
+      --accent:  #1E4E70;
+      --accent-h:#163B57;
+      --accent-soft: #EAF1F6;
       --danger:  #8C2F24;
       --danger-soft: #FBF1EF;
-      --ok-soft: #F0F5F2;
+      --ok-soft: #EFF4F8;
 
       --serif: Georgia, "Iowan Old Style", "Times New Roman", Times, serif;
       --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
@@ -55,7 +55,23 @@
     .site-header nav {
       font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase;
       color: var(--muted);
+      display: flex; align-items: center; gap: 20px;
     }
+    /* Way in for the recruiting team. Deliberately quiet: it is a staff door on
+       a public page, and the portal behind it asks for a password anyway. */
+    .staff-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; letter-spacing: 0.04em; text-transform: none;
+      color: var(--muted); text-decoration: none;
+      border: 1px solid var(--line-2); border-radius: 3px;
+      padding: 5px 11px; transition: color .12s, border-color .12s, background-color .12s;
+    }
+    .staff-link:hover {
+      color: var(--accent); border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .staff-link svg { display: block; }
+    .site-footer a { color: var(--accent); }
 
     .hero { padding: 56px 0 40px; border-bottom: 1px solid var(--line); }
     .eyebrow {
@@ -215,7 +231,7 @@
     .done-panel p { margin: 0 0 12px; font-size: 14px; }
     .done-panel .ref {
       font-size: 13px; color: var(--muted);
-      background: var(--ok-soft); border: 1px solid #DDE7E2; border-radius: 3px;
+      background: var(--ok-soft); border: 1px solid #CFE0EC; border-radius: 3px;
       padding: 9px 12px; margin-top: 4px;
     }
 
@@ -223,7 +239,7 @@
     .assessing {
       display: flex; align-items: center; gap: 10px;
       margin-top: 16px; padding: 12px 14px;
-      background: var(--ok-soft); border: 1px solid #DDE7E2; border-radius: 3px;
+      background: var(--ok-soft); border: 1px solid #CFE0EC; border-radius: 3px;
       font-size: 13.5px; color: var(--body);
     }
     .spinner {
@@ -233,39 +249,6 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
-
-    .score-card {
-      margin-top: 18px; border-radius: 4px; padding: 18px 20px;
-      border: 1px solid var(--line-2); background: var(--surface);
-    }
-    .score-card.pass { background: var(--ok-soft); border-color: #DDE7E2; }
-    .score-card.fail { background: var(--danger-soft); border-color: #E8CFC9; }
-    .score-card .label {
-      font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--muted);
-    }
-    .score-card .value {
-      font-size: 42px; font-weight: 700; line-height: 1.05; margin: 4px 0 2px;
-      font-variant-numeric: tabular-nums;
-    }
-    .score-card.pass .value { color: var(--accent); }
-    .score-card.fail .value { color: var(--danger); }
-    .score-card .verdict { font-size: 13.5px; color: var(--muted); }
-    .score-card .verdict strong { color: var(--ink); }
-    .score-bar {
-      position: relative; height: 5px; border-radius: 3px;
-      background: #DFDCD6; margin: 14px 0 4px; overflow: hidden;
-    }
-    .score-bar i { display: block; height: 100%; border-radius: 3px; }
-    .score-card.pass .score-bar i { background: var(--accent); }
-    .score-card.fail .score-bar i { background: var(--danger); }
-    .score-card .summary { font-size: 13.5px; margin: 14px 0 0; }
-    .score-card h4 {
-      font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase;
-      color: var(--muted); margin: 16px 0 6px; font-weight: 700;
-    }
-    .score-card ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
-    .score-card li { margin-bottom: 5px; }
 
     .legal {
       font-size: 12px; color: var(--muted); line-height: 1.55;
@@ -291,7 +274,18 @@
   <header class="site-header">
     <div class="wrap">
       <div class="wordmark">Utrains<span class="dot">.</span></div>
-      <nav>Careers</nav>
+      <nav>
+        <span>Careers</span>
+        <a class="staff-link" href="/admin" rel="nofollow">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none"
+               stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+               stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="7" width="10" height="7" rx="1.6"/>
+            <path d="M5.4 7V4.9a2.6 2.6 0 0 1 5.2 0V7"/>
+          </svg>
+          Recruiter sign-in
+        </a>
+      </nav>
     </div>
   </header>
 
@@ -393,12 +387,10 @@
             <p id="doneText"></p>
             <div class="ref" id="doneRef"></div>
 
-            <div class="assessing" id="assessing" hidden>
+            <div class="assessing" id="assessing">
               <span class="spinner" aria-hidden="true"></span>
-              <span>Assessing your CV against the role…</span>
+              <span>Your application is being reviewed.</span>
             </div>
-
-            <div id="scoreBox"></div>
           </div>
 
           <p class="legal">
@@ -426,6 +418,8 @@
            simply reply to the email you receive to request it.</p>
         <p>To exercise your rights or ask a question, reply to the confirmation
            email and our recruiting team will answer.</p>
+        <p style="margin-top:14px">Part of the recruiting team?
+           <a href="/admin" rel="nofollow">Sign in to the console</a>.</p>
       </div>
     </div>
   </footer>
@@ -591,58 +585,6 @@
       r.readAsDataURL(f);
     });
 
-    // Screening runs off the request thread, so /submit answers immediately and
-    // we poll until the status leaves RECEIVED.
-    async function pollResult(id, token) {
-      const DEADLINE = Date.now() + 150000;
-      $("assessing").hidden = false;
-
-      while (Date.now() < DEADLINE) {
-        await new Promise((r) => setTimeout(r, 2500));
-        let data;
-        try {
-          const res = await fetch(`/application/${id}?token=${encodeURIComponent(token)}`);
-          if (!res.ok) break;
-          data = await res.json();
-        } catch { continue; }
-
-        if (data.decided) {
-          $("assessing").hidden = true;
-          return showScore(data);
-        }
-        if (!data.pending) break;
-      }
-
-      // Timed out or screening failed: the decision still arrives by email.
-      $("assessing").hidden = true;
-      $("scoreBox").innerHTML =
-        '<div class="score-card"><div class="label">Assessment</div>' +
-        '<p class="summary" style="margin-top:8px">Your application is being reviewed ' +
-        'by our team. You will receive the outcome by email.</p></div>';
-    }
-
-    function showScore(d) {
-      const pass = d.accepted;
-      const score = Number(d.matchScore) || 0;
-      const li = (xs) => xs.map((x) => `<li>${esc(x)}</li>`).join("");
-
-      $("scoreBox").innerHTML = `
-        <div class="score-card ${pass ? "pass" : "fail"}">
-          <div class="label">Match score</div>
-          <div class="value">${score}%</div>
-          <div class="score-bar"><i style="width:${Math.max(2, score)}%"></i></div>
-          <div class="verdict">
-            Acceptance threshold ${d.threshold}% ·
-            <strong>${pass ? "Application successful" : "Application not successful"}</strong>
-          </div>
-          ${d.summary ? `<p class="summary">${esc(d.summary)}</p>` : ""}
-          ${d.strengths && d.strengths.length
-            ? `<h4>Strengths</h4><ul>${li(d.strengths)}</ul>` : ""}
-          ${!pass && d.gaps && d.gaps.length
-            ? `<h4>Areas to strengthen</h4><ul>${li(d.gaps)}</ul>` : ""}
-        </div>`;
-    }
-
     form.addEventListener("submit", async (ev) => {
       ev.preventDefault();
       if (!checkStep1(true)) return step(1);
@@ -688,12 +630,10 @@
         $("tab2").className = "done";
         $("doneText").textContent =
           "A confirmation email has just been sent to " + $("email").value.trim() +
-          ". Your CV is being reviewed — the outcome appears below and is also " +
-          "sent by email.";
+          ". Our recruiting team reviews your application and you will receive " +
+          "the outcome by email within the next few minutes.";
         $("doneRef").textContent = "Your reference: " + body.applicationId;
         $("done").classList.add("on");
-
-        if (body.statusToken) pollResult(body.applicationId, body.statusToken);
       } catch {
         fail("Submission failed. Please try again in a moment.");
         send.disabled = false;

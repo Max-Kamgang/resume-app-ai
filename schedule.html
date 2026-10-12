@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Schedule your screening call — Utrains</title>
+  <style>
+    /* System fonts on purpose: no third-party CDN is contacted, so no
+       candidate IP address leaves our infrastructure. */
+    :root {
+      --paper:   #FBFAF8;
+      --surface: #FFFFFF;
+      --ink:     #16161A;
+      --body:    #3A3A42;
+      --muted:   #6E6E78;
+      --line:    #E3E1DB;
+      --line-2:  #D3D0C8;
+      --accent:  #1E4E70;
+      --accent-h:#163B57;
+      --accent-soft: #EAF1F6;
+      --danger:  #8C2F24;
+      --danger-soft: #FBF1EF;
+      --ok-soft: #EFF4F8;
+
+      --serif: Georgia, "Iowan Old Style", "Times New Roman", Times, serif;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+              "Helvetica Neue", Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--paper); color: var(--body);
+      font-family: var(--sans); font-size: 15px; line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    .site-header { border-bottom: 1px solid var(--line); background: var(--surface); }
+    .site-header .inner {
+      max-width: 720px; margin: 0 auto; padding: 20px 28px;
+    }
+    .wordmark {
+      font-family: var(--serif); font-size: 23px; font-weight: 700;
+      letter-spacing: -0.015em; color: var(--ink);
+    }
+    .wordmark .dot { color: var(--accent); }
+
+    main { max-width: 720px; margin: 0 auto; padding: 44px 28px 72px; }
+    @media (max-width: 600px) { main, .site-header .inner { padding-left: 18px; padding-right: 18px; } }
+
+    h1 {
+      font-family: var(--serif); font-size: clamp(26px, 4vw, 34px);
+      line-height: 1.18; letter-spacing: -0.02em; color: var(--ink);
+      margin: 0 0 12px; font-weight: 700;
+    }
+    .lead { margin: 0 0 28px; font-size: 16px; max-width: 60ch; }
+    .card {
+      background: var(--surface); border: 1px solid var(--line-2);
+      border-radius: 4px; padding: 26px 28px;
+    }
+    @media (max-width: 600px) { .card { padding: 20px 18px; } }
+
+    .label {
+      display: block; font-size: 13px; font-weight: 600; color: var(--ink);
+      margin: 0 0 7px;
+    }
+    .hint { font-size: 12.5px; color: var(--muted); margin: 0 0 14px; }
+
+    .slot {
+      display: grid; grid-template-columns: 1fr 140px 36px;
+      gap: 10px; align-items: center; margin-bottom: 10px;
+    }
+    @media (max-width: 520px) { .slot { grid-template-columns: 1fr 110px 32px; gap: 7px; } }
+
+    input[type="date"], input[type="time"], input[type="text"], select, textarea {
+      width: 100%; font-family: inherit; font-size: 14.5px; color: var(--ink);
+      background: var(--surface); border: 1px solid var(--line-2);
+      border-radius: 3px; padding: 9px 11px;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none; border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    textarea { resize: vertical; min-height: 78px; line-height: 1.55; }
+
+    .drop-slot {
+      border: 1px solid var(--line); background: var(--paper);
+      border-radius: 3px; color: var(--muted); font-size: 17px; line-height: 1;
+      height: 36px; cursor: pointer;
+    }
+    .drop-slot:hover { color: var(--danger); border-color: #E8CFC9; }
+    .drop-slot[disabled] { opacity: .35; cursor: default; }
+
+    .add {
+      background: none; border: 1px dashed var(--line-2); color: var(--accent);
+      font-family: inherit; font-size: 13.5px; font-weight: 600;
+      padding: 8px 14px; border-radius: 3px; cursor: pointer; margin-top: 4px;
+    }
+    .add:hover { background: var(--accent-soft); }
+    .add[disabled] { opacity: .4; cursor: default; }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    @media (max-width: 600px) { .row { grid-template-columns: 1fr; gap: 0; } }
+
+    .block { margin-top: 24px; }
+
+    button.primary {
+      font-family: inherit; font-size: 14.5px; font-weight: 600;
+      background: var(--accent); color: #fff; border: none; border-radius: 3px;
+      padding: 12px 24px; cursor: pointer; margin-top: 26px;
+    }
+    button.primary:hover { background: var(--accent-h); }
+    button.primary[disabled] { opacity: .5; cursor: default; }
+
+    .notice { margin-top: 18px; font-size: 14px; padding: 12px 14px; border-radius: 3px; }
+    .notice:empty { display: none; }
+    .notice.bad { background: var(--danger-soft); border: 1px solid #E8CFC9; color: var(--danger); }
+    .notice.good { background: var(--ok-soft); border: 1px solid #CFE0EC; color: var(--accent); }
+
+    .state { display: none; }
+    .state.on { display: block; }
+
+    .recap { margin: 0; padding-left: 20px; font-size: 14.5px; }
+    .recap li { margin-bottom: 5px; }
+
+    .meta {
+      font-size: 12.5px; color: var(--muted); margin-top: 22px;
+      padding-top: 14px; border-top: 1px solid var(--line);
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="inner"><span class="wordmark">Utrains<span class="dot">.</span></span></div>
+  </header>
+
+  <main>
+    <!-- Loading -->
+    <div class="state on" id="s-loading">
+      <p class="lead">Loading your invitation…</p>
+    </div>
+
+    <!-- Bad or expired link -->
+    <div class="state" id="s-invalid">
+      <h1>This link is not valid</h1>
+      <p class="lead">
+        The scheduling link is incorrect, or it belongs to an application that is
+        no longer open. Please use the link exactly as it appears in the email we
+        sent you, or reply to that email and our recruiting team will help.
+      </p>
+    </div>
+
+    <!-- Form -->
+    <div class="state" id="s-form">
+      <h1 id="title">Schedule your screening call</h1>
+      <p class="lead" id="intro"></p>
+
+      <div class="card">
+        <label class="label">When are you available?</label>
+        <p class="hint" id="slotHint"></p>
+        <div id="slots"></div>
+        <button type="button" class="add" id="addSlot">+ Add another slot</button>
+
+        <div class="block">
+          <label class="label" for="tz">Your time zone</label>
+          <input id="tz" type="text" autocomplete="off"
+                 placeholder="e.g. Europe/Paris or GMT+1" />
+        </div>
+
+        <div class="block">
+          <label class="label" for="note">Anything we should know? <span
+            style="font-weight:400;color:var(--muted)">(optional)</span></label>
+          <textarea id="note" maxlength="500"
+            placeholder="A preferred slot, a constraint, a phone number to call…"></textarea>
+        </div>
+
+        <button type="button" class="primary" id="send">Send my availability</button>
+        <div class="notice" id="notice"></div>
+      </div>
+
+      <p class="meta" id="ref"></p>
+    </div>
+
+    <!-- Done -->
+    <div class="state" id="s-done">
+      <h1>Thank you — we have your availability</h1>
+      <p class="lead">
+        Our recruiting team will confirm one of these slots by email and send you
+        the meeting link. A confirmation is on its way to your inbox.
+      </p>
+      <div class="card">
+        <label class="label">Slots you proposed</label>
+        <ul class="recap" id="doneSlots"></ul>
+        <p class="meta" id="doneTz"></p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const params = new URLSearchParams(location.search);
+    const APP_ID = Number(params.get("id"));
+    const TOKEN = params.get("token") || "";
+
+    let maxSlots = 5;
+
+    function show(id) {
+      for (const el of document.querySelectorAll(".state")) el.classList.remove("on");
+      $(id).classList.add("on");
+    }
+    const esc = (s) => String(s).replace(/[&<>"']/g,
+      (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+    // Dates are bounded in the browser as well as on the server: an out-of-range
+    // slot is better prevented than rejected after the fact.
+    function isoDay(offset) {
+      const d = new Date();
+      d.setDate(d.getDate() + offset);
+      return d.toISOString().slice(0, 10);
+    }
+
+    function slotRow(windowDays) {
+      const wrap = document.createElement("div");
+      wrap.className = "slot";
+      wrap.innerHTML =
+        `<input type="date" min="${isoDay(0)}" max="${isoDay(windowDays)}" />` +
+        `<input type="time" step="900" />` +
+        `<button type="button" class="drop-slot" title="Remove this slot">&times;</button>`;
+      wrap.querySelector(".drop-slot").addEventListener("click", () => {
+        wrap.remove();
+        refreshSlotControls();
+      });
+      return wrap;
+    }
+
+    function refreshSlotControls() {
+      const rows = $("slots").children;
+      $("addSlot").disabled = rows.length >= maxSlots;
+      // Never leave the candidate with no row at all to fill in.
+      for (const row of rows) row.querySelector(".drop-slot").disabled = rows.length === 1;
+    }
+
+    async function load() {
+      if (!APP_ID || !TOKEN) return show("s-invalid");
+      let data;
+      try {
+        const res = await fetch(
+          `/api/schedule?id=${APP_ID}&token=${encodeURIComponent(TOKEN)}`);
+        if (!res.ok) return show("s-invalid");
+        data = await res.json();
+      } catch {
+        return show("s-invalid");
+      }
+
+      maxSlots = data.maxSlots || 5;
+
+      if (data.submitted) {
+        $("doneSlots").innerHTML = data.slots.map((s) => `<li>${esc(s)}</li>`).join("");
+        $("doneTz").textContent = "Time zone: " + (data.timezone || "—");
+        return show("s-done");
+      }
+
+      $("intro").textContent =
+        `Hello ${data.firstName}, we would like to speak with you about the ` +
+        `${data.position} role. Tell us when you are free over the next ` +
+        `${data.windowDays} days and we will confirm a slot by email.`;
+      $("slotHint").textContent =
+        `Propose up to ${maxSlots} slots. Each call lasts about 30 minutes.`;
+      $("ref").textContent = "Application reference: " + data.applicationId;
+
+      for (let i = 0; i < 2; i++) $("slots").appendChild(slotRow(data.windowDays));
+      refreshSlotControls();
+
+      $("addSlot").addEventListener("click", () => {
+        if ($("slots").children.length >= maxSlots) return;
+        $("slots").appendChild(slotRow(data.windowDays));
+        refreshSlotControls();
+      });
+
+      try {
+        $("tz").value = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+      } catch { /* the field stays empty and the candidate types it */ }
+
+      show("s-form");
+    }
+
+    $("send").addEventListener("click", async () => {
+      const notice = $("notice");
+      notice.className = "notice";
+      notice.textContent = "";
+
+      const slots = [];
+      for (const row of $("slots").children) {
+        const [date, time] = row.querySelectorAll("input");
+        if (date.value && time.value) slots.push({ date: date.value, time: time.value });
+        else if (date.value || time.value) {
+          notice.className = "notice bad";
+          notice.textContent = "One slot has a date without a time, or the other way round.";
+          return;
+        }
+      }
+      if (!slots.length) {
+        notice.className = "notice bad";
+        notice.textContent = "Please propose at least one slot.";
+        return;
+      }
+      if (!$("tz").value.trim()) {
+        notice.className = "notice bad";
+        notice.textContent = "Please indicate your time zone.";
+        return;
+      }
+
+      $("send").disabled = true;
+      $("send").textContent = "Sending…";
+      try {
+        const res = await fetch("/api/schedule", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            applicationId: APP_ID,
+            token: TOKEN,
+            slots,
+            timezone: $("tz").value.trim(),
+            note: $("note").value.trim(),
+          }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          $("send").disabled = false;
+          $("send").textContent = "Send my availability";
+          notice.className = "notice bad";
+          notice.textContent =
+            body.message ||
+            (body.error === "already_submitted"
+              ? "Your availability has already been recorded."
+              : "We could not record your availability. Please try again in a moment.");
+          return;
+        }
+        $("doneSlots").innerHTML = body.slots.map((s) => `<li>${esc(s)}</li>`).join("");
+        $("doneTz").textContent = "Time zone: " + body.timezone;
+        show("s-done");
+      } catch {
+        $("send").disabled = false;
+        $("send").textContent = "Send my availability";
+        notice.className = "notice bad";
+        notice.textContent = "Network error. Please try again in a moment.";
+      }
+    });
+
+    load();
+  </script>
+</body>
+</html>
